@@ -129,7 +129,7 @@ const INITIAL_DAYS_DATA = INITIAL_DAYS_DATA_RAW.map(d => ({
   ...d,
   originalShopTarget: d.shopTarget,
   originalBannerTarget: d.bannerTarget,
-  // If the initial day is already completed, ensure the target is synced to the actual spent
+  // If the initial day is already completed, ensure target starts off synced to actual spent
   shopTarget: d.isCompleted ? d.shopActual : d.shopTarget,
   bannerTarget: d.isCompleted ? d.bannerActual : d.bannerTarget
 }));
@@ -234,7 +234,7 @@ export default function App() {
           const hasActualSpent = (updated.shopActual > 0 || updated.bannerActual > 0);
           updated.isCompleted = hasActualSpent;
           
-          // Sync targets strictly to actuals if marked completed (even if actual is 0)
+          // Strict Sync: targets must exactly match the current actuals if completed (even if 0)
           if (updated.isCompleted) {
             updated.shopTarget = updated.shopActual;
             updated.bannerTarget = updated.bannerActual;
@@ -572,6 +572,7 @@ export default function App() {
           </div>
         </section>
 
+        {}
         {/* Dashboard Widgets */}
         <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
           
@@ -660,6 +661,7 @@ export default function App() {
 
         </section>
 
+        {}
         {/* Dynamic Preset Allocator */}
         <section className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm space-y-4">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-3">
@@ -814,6 +816,7 @@ export default function App() {
           </div>
         </section>
 
+        {}
         {/* Daily Campaign Table */}
         <section className="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden">
           <div className="p-4 border-b border-slate-100 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-slate-50/50">
@@ -901,7 +904,7 @@ export default function App() {
                       <td className="py-1.5 px-2 bg-blue-50/10">
                         <input
                           type="text"
-                          value={day.shopTarget === 0 ? '' : day.shopTarget}
+                          value={day.shopTarget === 0 ? '0' : day.shopTarget}
                           placeholder="0"
                           disabled={day.isCompleted}
                           onChange={(e) => handleCellChange(day.date, 'shopTarget', e.target.value)}
@@ -929,7 +932,7 @@ export default function App() {
                       <td className="py-1.5 px-2 bg-blue-50/10">
                         <input
                           type="text"
-                          value={day.bannerTarget === 0 ? '' : day.bannerTarget}
+                          value={day.bannerTarget === 0 ? '0' : day.bannerTarget}
                           placeholder="0"
                           disabled={day.isCompleted}
                           onChange={(e) => handleCellChange(day.date, 'bannerTarget', e.target.value)}
@@ -988,7 +991,7 @@ export default function App() {
                                 return {
                                   ...d,
                                   isCompleted: nextCompleted,
-                                  // Update targets to strictly match actual spent on complete (even if 0); Restore to original targets on cancel
+                                  // Update target to match actual on complete; Restore to original targets on cancel
                                   shopTarget: nextCompleted ? d.shopActual : d.originalShopTarget,
                                   bannerTarget: nextCompleted ? d.bannerActual : d.originalBannerTarget,
                                 };
