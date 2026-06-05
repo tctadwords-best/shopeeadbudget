@@ -5,13 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Shopee Ads Smart Budgeting Dashboard</title>
     
-    <!-- React & ReactDOM Production CDNs -->
-    <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
-    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
-    
-    <!-- Babel for Browser JSX Transpiling -->
-    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-    
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     
@@ -20,7 +13,7 @@
         body {
             font-family: 'Sarabun', sans-serif;
         }
-        /* ซ่อนลูกศรของ input type="number" เพื่อความสะอาดตา */
+        /* ซ่อนปุ่มลูกศรของช่องป้อนตัวเลข */
         input::-webkit-outer-spin-button,
         input::-webkit-inner-spin-button {
             -webkit-appearance: none;
@@ -31,89 +24,491 @@
         }
     </style>
 </head>
-<body class="bg-slate-50 text-slate-800">
-    
-    <!-- Root element for React mount -->
-    <div id="root"></div>
+<body class="bg-slate-50 text-slate-800 antialiased">
 
-    <script type="text/babel">
-        const { useState, useMemo, useEffect } = React;
+    <div class="min-h-screen p-4 md:p-6">
+        <div class="max-w-7xl mx-auto space-y-4">
+            
+            <!-- Header Block -->
+            <header class="flex flex-col md:flex-row justify-between items-start md:items-center bg-white border border-slate-200 rounded-2xl p-5 shadow-sm gap-4">
+                <div class="space-y-1">
+                    <div class="flex items-center gap-2">
+                        <span class="p-1.5 bg-orange-600 rounded-lg text-white font-black text-xs tracking-wider">SHOPEE</span>
+                        <h1 class="text-xl font-extrabold text-slate-900 tracking-tight">Smart Budget Planner</h1>
+                    </div>
+                    <p class="text-slate-500 text-xs">เครื่องมือจัดสรรงบแอดรายวัน สำหรับกระตุ้นยอดขายพร้อมระบบเกลี่ยเงินอัตโนมัติ</p>
+                </div>
+                
+                <div class="flex flex-wrap items-center gap-3 w-full md:w-auto">
+                    <!-- Month selector -->
+                    <div class="bg-slate-100 p-1.5 rounded-xl flex items-center border border-slate-200 text-xs">
+                        <span class="px-2 text-slate-500 font-medium">เลือกเดือน:</span>
+                        <select 
+                            id="month-selector" 
+                            onchange="changeMonth(this.value)"
+                            class="bg-white border border-slate-200 text-orange-600 font-bold focus:ring-1 focus:ring-orange-500 rounded-lg cursor-pointer py-1 px-2"
+                        >
+                            <option value="01">มกราคม (1.1)</option>
+                            <option value="02">กุมภาพันธ์ (2.2)</option>
+                            <option value="03" selected>มีนาคม (3.3)</option>
+                            <option value="04">เมษายน (4.4)</option>
+                            <option value="05">พฤษภาคม (5.5)</option>
+                            <option value="06">มิถุนายน (6.6)</option>
+                            <option value="07">กรกฎาคม (7.7)</option>
+                            <option value="08">สิงหาคม (8.8)</option>
+                            <option value="09">กันยายน (9.9)</option>
+                            <option value="10">ตุลาคม (10.10)</option>
+                            <option value="11">พฤศจิกายน (11.11)</option>
+                            <option value="12">ธันวาคม (12.12)</option>
+                        </select>
+                    </div>
+                    
+                    <!-- Reset button -->
+                    <button 
+                        onclick="openResetConfirmModal()"
+                        class="px-3 py-1.5 text-xs bg-white hover:bg-red-50 border border-slate-200 text-red-600 hover:border-red-300 transition duration-150 rounded-xl flex items-center gap-2 font-semibold shadow-sm ml-auto md:ml-0"
+                    >
+                        <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 1121.21 11H18M9 7h1v10H9m4-10h1v10h-1" />
+                        </svg>
+                        ล้างยอดใช้จริง
+                    </button>
+                </div>
+            </header>
 
-        // SVG Icons
-        const IconRefreshCw = ({ className = "w-4 h-4" }) => (
-          <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 1121.21 11H18M9 7h1v10H9m4-10h1v10h-1" />
-            <path strokeLinecap="round" strokeLinejoin="round" d="M4 4a9 9 0 0113.824-2.824L21 4v5h-5" />
-          </svg>
-        );
+            <!-- Compact Save Plans Section -->
+            <section class="bg-white border border-slate-200 rounded-2xl p-4 shadow-sm flex flex-col gap-3">
+                <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-3 pb-3 border-b border-slate-100">
+                    <div class="flex items-center gap-2 min-w-[180px]">
+                        <div class="p-1.5 bg-indigo-50 text-indigo-600 rounded-lg">
+                            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                            </svg>
+                        </div>
+                        <div>
+                            <h3 class="font-bold text-slate-800 text-xs">จัดการแผนงบประมาณโฆษณา</h3>
+                            <p class="text-[10px] text-slate-400">สร้าง เปลี่ยนชื่อ ลบ หรือสลับแผนงานได้ที่นี่</p>
+                        </div>
+                    </div>
 
-        const IconFileText = ({ className = "w-4 h-4" }) => (
-          <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-          </svg>
-        );
+                    <div class="flex flex-wrap items-center gap-2 justify-start lg:justify-end">
+                        <span class="text-[10px] text-slate-400 font-bold uppercase mr-1">แผนปัจจุบัน:</span>
+                        
+                        <!-- บันทึกปัจจุบัน -->
+                        <button
+                            id="btn-quick-save"
+                            onclick="triggerManualSave()"
+                            class="px-3 py-1.5 border border-emerald-200 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 rounded-xl text-[11px] font-bold transition duration-150 flex items-center gap-1 shadow-sm"
+                        >
+                            <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" />
+                            </svg>
+                            <span id="text-quick-save">บันทึกปัจจุบัน</span>
+                        </button>
 
-        const IconEdit2 = ({ className = "w-4 h-4" }) => (
-          <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
-          </svg>
-        );
+                        <!-- เปลี่ยนชื่อแผนปัจจุบัน -->
+                        <button
+                            onclick="openRenameModalOfActive()"
+                            class="px-3 py-1.5 border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 rounded-xl text-[11px] font-bold transition duration-150 flex items-center gap-1 shadow-sm"
+                        >
+                            <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                            </svg>
+                            <span>เปลี่ยนชื่อ</span>
+                        </button>
 
-        const IconTrash2 = ({ className = "w-4 h-4" }) => (
-          <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-          </svg>
-        );
+                        <!-- ลบแผนปัจจุบัน -->
+                        <button
+                            onclick="openDeleteModalOfActive()"
+                            class="px-3 py-1.5 border border-red-200 bg-red-50 hover:bg-red-100 text-red-700 rounded-xl text-[11px] font-bold transition duration-150 flex items-center gap-1 shadow-sm"
+                        >
+                            <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                            </svg>
+                            <span>ลบแผนนี้</span>
+                        </button>
+                        
+                        <div class="h-4 w-[1px] bg-slate-200 mx-1 hidden sm:block"></div>
+                        
+                        <!-- สร้างแผนใหม่ -->
+                        <button
+                            onclick="openSavePlanModal()"
+                            class="px-3 py-1.5 bg-orange-600 hover:bg-orange-700 text-white rounded-xl text-[11px] font-bold transition duration-150 flex items-center gap-1 shadow-sm"
+                        >
+                            <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
+                            </svg>
+                            สร้างแผนใหม่
+                        </button>
+                    </div>
+                </div>
 
-        const IconSave = ({ className = "w-4 h-4" }) => (
-          <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" />
-          </svg>
-        );
+                <!-- รายชื่อแผนที่บันทึกไว้ในระบบ -->
+                <div class="space-y-1">
+                    <span class="text-[10px] text-slate-400 font-bold uppercase tracking-wider block">รายชื่อแผนงานทั้งหมดในระบบ (คลิกเพื่อเลือกเปิด):</span>
+                    <div id="plans-container" class="flex flex-wrap gap-2 pt-1"></div>
+                </div>
+            </section>
 
-        const IconPlus = ({ className = "w-4 h-4" }) => (
-          <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
-          </svg>
-        );
+            <!-- Dashboard Cards -->
+            <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+                
+                <!-- Budget Plan -->
+                <div class="bg-white border border-slate-200 rounded-2xl p-4 shadow-sm flex flex-col justify-between">
+                    <div class="flex justify-between items-start">
+                        <span class="text-slate-500 text-[10px] font-bold uppercase tracking-wider">งบประมาณตามแผน</span>
+                        <span class="p-1 bg-blue-50 text-blue-600 rounded-lg">
+                            <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 00-2 2z" />
+                            </svg>
+                        </span>
+                    </div>
+                    <div class="mt-2">
+                        <h3 id="calc-total-target" class="text-xl font-extrabold text-slate-900">฿0</h3>
+                        <div class="flex gap-2 text-slate-400 text-[10px] mt-1 font-medium">
+                            <span id="calc-shop-target-sub">Shop: ฿0</span>
+                            <span>•</span>
+                            <span id="calc-banner-target-sub">Banner: ฿0</span>
+                        </div>
+                    </div>
+                </div>
 
-        const IconCalendar = ({ className = "w-4 h-4" }) => (
-          <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 00-2 2z" />
-          </svg>
-        );
+                <!-- Actual Spent -->
+                <div class="bg-white border border-slate-200 rounded-2xl p-4 shadow-sm flex flex-col justify-between">
+                    <div class="flex justify-between items-start">
+                        <span class="text-slate-500 text-[10px] font-bold uppercase tracking-wider">ใช้จริงสะสม</span>
+                        <span class="p-1 bg-orange-50 text-orange-600 rounded-lg">
+                            <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                        </span>
+                    </div>
+                    <div class="mt-2">
+                        <h3 id="calc-total-actual" class="text-xl font-extrabold text-orange-600">฿0</h3>
+                        <div class="flex items-center gap-1.5 mt-1">
+                            <div class="w-full bg-slate-100 h-1.5 rounded-full overflow-hidden border border-slate-200/50">
+                                <div id="calc-spent-progress" class="bg-orange-500 h-1.5 rounded-full" style="width: 0%"></div>
+                            </div>
+                            <span id="calc-spent-percent" class="text-[10px] font-bold text-orange-600 whitespace-nowrap">0%</span>
+                        </div>
+                    </div>
+                </div>
 
-        const IconDollarSign = ({ className = "w-4 h-4" }) => (
-          <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-          </svg>
-        );
+                <!-- Remaining Budget -->
+                <div class="bg-white border border-slate-200 rounded-2xl p-4 shadow-sm flex flex-col justify-between">
+                    <div class="flex justify-between items-start">
+                        <span class="text-slate-500 text-[10px] font-bold uppercase tracking-wider">งบเหลือในระบบ</span>
+                        <span class="p-1 bg-emerald-50 text-emerald-600 rounded-lg">
+                            <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+                            </svg>
+                        </span>
+                    </div>
+                    <div class="mt-2">
+                        <h3 id="calc-remaining-budget" class="text-xl font-extrabold text-emerald-600">฿0</h3>
+                        <p id="calc-completed-days" class="text-slate-400 text-[10px] mt-1 font-medium">บันทึกแล้ว 0 จาก 31 วัน</p>
+                    </div>
+                </div>
 
-        const IconTrendingUp = ({ className = "w-4 h-4" }) => (
-          <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
-          </svg>
-        );
+                <!-- Roll-Over Budget -->
+                <div class="bg-white border border-slate-200 rounded-2xl p-4 shadow-sm flex flex-col justify-between">
+                    <div class="flex justify-between items-start">
+                        <span class="text-slate-500 text-[10px] font-bold uppercase tracking-wider">งบประหยัดสะสม (Roll-Over)</span>
+                        <span class="p-1 bg-purple-50 text-purple-600 rounded-lg">
+                            <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 1121.21 11H18M9 7h1v10H9m4-10h1v10h-1" />
+                            </svg>
+                        </span>
+                    </div>
+                    <div class="mt-2">
+                        <h3 id="calc-pacing-gap" class="text-xl font-extrabold text-purple-600">฿0</h3>
+                        <p id="calc-pacing-gap-desc" class="text-slate-400 text-[10px] mt-1 flex items-center gap-1 font-medium">
+                            <svg class="w-2.5 h-2.5 text-purple-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                            </svg>
+                            <span>ใช้น้อยกว่าเป้า เกลี่ยไปวันอื่น</span>
+                        </p>
+                    </div>
+                </div>
 
-        const IconFlame = ({ className = "w-4 h-4" }) => (
-          <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-            <path strokeLinecap="round" strokeLinejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-          </svg>
-        );
+                <!-- Recommended Average -->
+                <div class="bg-orange-50 border-2 border-orange-500/30 rounded-2xl p-4 shadow-sm flex flex-col justify-between">
+                    <div class="flex justify-between items-start">
+                        <span class="text-orange-800 text-[10px] font-bold uppercase tracking-wider">เฉลี่ยงบที่เหลือ (แนะนำ)</span>
+                        <span class="p-1 bg-orange-100 text-orange-600 rounded-lg">
+                            <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                            </svg>
+                        </span>
+                    </div>
+                    <div class="mt-2">
+                        <h3 id="calc-recommended-spend" class="text-xl font-black text-orange-700">฿0 <span class="text-[10px] font-normal text-slate-500">/ วัน</span></h3>
+                        <p id="calc-remaining-days" class="text-slate-500 text-[10px] mt-1 font-medium">เฉลี่ยโควตาสำหรับ 0 วันที่เหลือ</p>
+                    </div>
+                </div>
 
-        const IconAlertCircle = ({ className = "w-4 h-4" }) => (
-          <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-          </svg>
-        );
+            </section>
 
-        const IconX = ({ className = "w-4 h-4" }) => (
-          <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-          </svg>
-        );
+            <!-- Smart Preset Allocator -->
+            <section class="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm space-y-4">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-3">
+                    <h2 class="text-sm font-extrabold text-slate-800 flex items-center gap-1.5">
+                        <span>⚡</span> จัดการแม่แบบงบด่วน (Smart Preset Allocator)
+                    </h2>
+                    <div class="flex items-center gap-2">
+                        <span class="text-slate-400 text-xs hidden lg:inline font-medium">ป้อนงบแล้วกดกระจายเพื่อลงคิวแคมเปญในวันที่เหลือทันที:</span>
+                        <button 
+                            onclick="applyAllPresets()"
+                            class="px-4 py-1.5 bg-gradient-to-r from-orange-500 to-amber-600 hover:from-orange-600 hover:to-amber-700 font-extrabold text-xs text-white rounded-xl shadow-sm transition duration-150 flex items-center gap-1.5"
+                        >
+                            <span>⚡</span> กระจายงบ
+                        </button>
+                    </div>
+                </div>
 
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                    
+                    <!-- Normal Day -->
+                    <div class="bg-slate-50 p-3 rounded-xl border border-slate-150 space-y-2">
+                        <div class="flex justify-between items-center">
+                            <span class="font-bold text-xs text-blue-600">วันธรรมดา (Normal Day)</span>
+                            <button onclick="applyPresetToSelectedTypes('Normal')" class="px-2 py-0.5 bg-blue-100 hover:bg-blue-200 text-blue-700 rounded-lg text-[9px] font-bold transition">
+                                อัปเดตกลุ่มนี้
+                            </button>
+                        </div>
+                        <div class="grid grid-cols-2 gap-2 text-xs">
+                            <div>
+                                <label class="text-[10px] text-slate-500 block mb-0.5">Shop Ads</label>
+                                <input id="preset-normalShop" type="number" oninput="updatePresetState('normalShop', this.value)" class="w-full bg-white border border-slate-200 rounded-lg p-1 text-slate-800 text-center font-bold" />
+                            </div>
+                            <div>
+                                <label class="text-[10px] text-slate-500 block mb-0.5">Banner Ads</label>
+                                <input id="preset-normalBanner" type="number" oninput="updatePresetState('normalBanner', this.value)" class="w-full bg-white border border-slate-200 rounded-lg p-1 text-slate-800 text-center font-bold" />
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- D-Day -->
+                    <div class="bg-rose-50/40 p-3 rounded-xl border border-rose-100 space-y-2">
+                        <div class="flex justify-between items-center">
+                            <span class="font-bold text-xs text-rose-600">วันดับเบิ้ล (D-Day เลขคู่)</span>
+                            <button onclick="applyPresetToSelectedTypes('D-Day')" class="px-2 py-0.5 bg-rose-100 hover:bg-rose-200 text-rose-700 rounded-lg text-[9px] font-bold transition">
+                                อัปเดตกลุ่มนี้
+                            </button>
+                        </div>
+                        <div class="grid grid-cols-2 gap-2 text-xs">
+                            <div>
+                                <label class="text-[10px] text-slate-500 block mb-0.5">Shop Ads</label>
+                                <input id="preset-ddayShop" type="number" oninput="updatePresetState('ddayShop', this.value)" class="w-full bg-white border border-rose-200 rounded-lg p-1 text-rose-700 text-center font-bold" />
+                            </div>
+                            <div>
+                                <label class="text-[10px] text-slate-500 block mb-0.5">Banner Ads</label>
+                                <input id="preset-ddayBanner" type="number" oninput="updatePresetState('ddayBanner', this.value)" class="w-full bg-white border border-rose-200 rounded-lg p-1 text-rose-700 text-center font-bold" />
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Mid-Month -->
+                    <div class="bg-amber-50/40 p-3 rounded-xl border border-amber-150 space-y-2">
+                        <div class="flex justify-between items-center">
+                            <span class="font-bold text-xs text-amber-700">กลางเดือน (Mid-Month)</span>
+                            <button onclick="applyPresetToSelectedTypes('MidMonth')" class="px-2 py-0.5 bg-amber-100 hover:bg-amber-200 text-amber-800 rounded-lg text-[9px] font-bold transition">
+                                อัปเดตกลุ่มนี้
+                            </button>
+                        </div>
+                        <div class="grid grid-cols-2 gap-2 text-xs">
+                            <div>
+                                <label class="text-[10px] text-slate-500 block mb-0.5">Shop Ads</label>
+                                <input id="preset-midMonthShop" type="number" oninput="updatePresetState('midMonthShop', this.value)" class="w-full bg-white border border-amber-200 rounded-lg p-1 text-amber-700 text-center font-bold" />
+                            </div>
+                            <div>
+                                <label class="text-[10px] text-slate-500 block mb-0.5">Banner Ads</label>
+                                <input id="preset-midMonthBanner" type="number" oninput="updatePresetState('midMonthBanner', this.value)" class="w-full bg-white border border-amber-200 rounded-lg p-1 text-amber-700 text-center font-bold" />
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Payday -->
+                    <div class="bg-purple-50/40 p-3 rounded-xl border border-purple-100 space-y-2">
+                        <div class="flex justify-between items-center">
+                            <span class="font-bold text-xs text-purple-700">เงินเดือนออก (Payday)</span>
+                            <button onclick="applyPresetToSelectedTypes('Payday')" class="px-2 py-0.5 bg-purple-100 hover:bg-purple-200 text-purple-700 rounded-lg text-[9px] font-bold transition">
+                                อัปเดตกลุ่มนี้
+                            </button>
+                        </div>
+                        <div class="grid grid-cols-2 gap-2 text-xs">
+                            <div>
+                                <label class="text-[10px] text-slate-500 block mb-0.5">Shop Ads</label>
+                                <input id="preset-paydayShop" type="number" oninput="updatePresetState('paydayShop', this.value)" class="w-full bg-white border border-purple-200 rounded-lg p-1 text-purple-700 text-center font-bold" />
+                            </div>
+                            <div>
+                                <label class="text-[10px] text-slate-500 block mb-0.5">Banner Ads</label>
+                                <input id="preset-paydayBanner" type="number" oninput="updatePresetState('paydayBanner', this.value)" class="w-full bg-white border border-purple-200 rounded-lg p-1 text-purple-700 text-center font-bold" />
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </section>
+
+            <!-- Table Section -->
+            <section class="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden">
+                <div class="p-4 border-b border-slate-100 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-slate-50/50">
+                    <div>
+                        <h3 class="text-sm font-extrabold text-slate-900">📅 ตารางจัดสรรงบรายวัน (Campaign Tracker Table)</h3>
+                        <p class="text-slate-400 text-xs mt-0.5">ปรับเป้าหมาย (Target) หรือยอดใช้จริง (Actual) ยอดผลรวมของแผนและตัวเลขเกลี่ยงบส่วนต่างที่เหลือจะอัปเดตให้อัตโนมัติ</p>
+                    </div>
+                    
+                    <div class="flex gap-2 text-[10px] flex-wrap">
+                        <span class="px-2 py-0.5 rounded-lg bg-rose-50 border border-rose-200 text-rose-700 flex items-center gap-1 font-semibold">
+                            <span class="w-1.5 h-1.5 rounded-full bg-rose-500"></span> D-Day (คู่)
+                        </span>
+                        <span class="px-2 py-0.5 rounded-lg bg-purple-50 border border-purple-200 text-purple-700 flex items-center gap-1 font-semibold">
+                            <span class="w-1.5 h-1.5 rounded-full bg-purple-500"></span> Payday
+                        </span>
+                        <span class="px-2 py-0.5 rounded-lg bg-amber-50 border border-amber-200 text-amber-700 flex items-center gap-1 font-semibold">
+                            <span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span> Mid-Month
+                        </span>
+                    </div>
+                </div>
+
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse text-xs md:text-sm">
+                        <thead class="bg-slate-100 border-b border-slate-200 text-slate-600 uppercase font-bold text-[10px] tracking-wider">
+                            <tr>
+                                <th class="py-3 px-3 text-center w-12 text-slate-700">วันที่</th>
+                                <th class="py-3 px-3 w-32 text-slate-700">ประเภทแคมเปญ</th>
+                                <th class="py-3 px-3 text-right bg-blue-50/30 text-blue-800">Shop Ads Target</th>
+                                <th class="py-3 px-3 text-right bg-orange-50/30 text-orange-800">Shop Actual Spent</th>
+                                <th class="py-3 px-3 text-right bg-blue-50/30 text-blue-800">Banner Target</th>
+                                <th class="py-3 px-3 text-right bg-orange-50/30 text-orange-800">Banner Actual Spent</th>
+                                <th class="py-3 px-3 text-right font-bold text-slate-800 border-l border-slate-200 bg-slate-50/50">Total Planned</th>
+                                <th class="py-3 px-3 text-right font-bold text-slate-800 bg-slate-50/50">Total Actual</th>
+                                <th class="py-3 px-3 text-right font-bold text-slate-800 bg-slate-50/50">ส่วนต่างแผนเดิม (Variance)</th>
+                                <th class="py-3 px-3 text-center">บันทึกผล</th>
+                            </tr>
+                        </thead>
+                        <tbody id="table-body" class="divide-y divide-slate-100 text-xs">
+                            <!-- แถวจะถูกเรนเดอร์ผ่านทาง JavaScript -->
+                        </tbody>
+                        <tfoot class="bg-slate-100 border-t border-slate-200 font-bold text-slate-700 text-xs">
+                            <tr>
+                                <td class="py-4 px-3 text-center text-slate-900 font-extrabold">รวม</td>
+                                <td class="py-4 px-3"></td>
+                                <td id="foot-shop-target" class="py-4 px-3 text-right bg-blue-50/50 text-blue-800 text-xs font-extrabold">฿0</td>
+                                <td id="foot-shop-actual" class="py-4 px-3 text-right bg-orange-50/50 text-orange-800 text-xs font-extrabold">฿0</td>
+                                <td id="foot-banner-target" class="py-4 px-3 text-right bg-blue-50/50 text-blue-800 text-xs font-extrabold">฿0</td>
+                                <td id="foot-banner-actual" class="py-4 px-3 text-right bg-orange-50/50 text-orange-800 text-xs font-extrabold">฿0</td>
+                                <td id="foot-total-target" class="py-4 px-3 text-right text-slate-900 text-xs border-l border-slate-200 font-extrabold">฿0</td>
+                                <td id="foot-total-actual" class="py-4 px-3 text-right text-orange-600 text-xs font-extrabold">฿0</td>
+                                <td id="foot-variance" class="py-4 px-3 text-right text-xs">฿0</td>
+                                <td class="py-4 px-3"></td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+            </section>
+
+            <!-- Explanation Footer -->
+            <footer class="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm text-slate-500 text-[11px] space-y-2">
+                <h4 class="font-bold text-slate-800 text-xs flex items-center gap-1">
+                    <span class="text-orange-500">💡</span> คำชี้แจงระบบเกลี่ยเงินโฆษณาสะสม (Roll-Over Campaign Strategy):
+                </h4>
+                <p>• เมื่อทำการ <strong>"บันทึกแล้ว"</strong> ระบบจะปรับ <strong>Shop Ads Target / Banner Target</strong> ของวันนั้นให้เท่ากับยอดจ่ายจริงโดยอัตโนมัติ เพื่อรักษาความเป็นระเบียบและสอดคล้องกับงบจริงที่เกิดขึ้น</p>
+                <p>• ระบบจำยอดแผนเดิม (Original Target) ไว้ในฐานข้อมูลเบื้องหลัง เพื่อใช้คำนวณ <strong>งบประหยัดสะสม (Roll-Over)</strong> ส่งผลให้ "เฉลี่ยงบที่เหลือ (แนะนำ)" ยังสามารถเกลี่ยเงินได้อย่างแม่นยำ 100% โดยไม่อิงตามตารางที่แปรผันไป</p>
+            </footer>
+
+        </div>
+    </div>
+
+    <!-- ==========================================
+        MODAL WINDOWS (HTML PURE)
+       ========================================== -->
+
+    <!-- Modal: Save Plan -->
+    <div id="modal-save" class="fixed inset-0 bg-slate-900/40 backdrop-blur-xs flex items-center justify-center p-4 z-50 hidden">
+        <div class="bg-white rounded-2xl max-w-md w-full border border-slate-200 p-6 shadow-xl space-y-4">
+            <div class="flex justify-between items-center border-b border-slate-100 pb-2">
+                <h3 class="font-black text-slate-900 text-sm">สร้างแผนงบประมาณใหม่</h3>
+                <button onclick="closeModal('save')" class="text-slate-400 hover:text-slate-600 transition">
+                    <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+                </button>
+            </div>
+            <div class="space-y-2">
+                <label class="text-xs text-slate-500 font-bold block">ระบุชื่อแผนงบประมาณใหม่ของคุณ</label>
+                <input id="input-new-plan-name" type="text" placeholder="เช่น แผนโฆษณาพฤษภาคม 5.5..." class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs focus:ring-1 focus:ring-orange-500 focus:bg-white text-slate-800 font-medium" />
+            </div>
+            <div class="flex justify-end gap-2 text-xs font-bold pt-2">
+                <button onclick="closeModal('save')" class="px-4 py-2 border border-slate-200 text-slate-600 rounded-xl hover:bg-slate-50 transition">ยกเลิก</button>
+                <button onclick="saveAsNewPlan()" class="px-4 py-2 bg-orange-600 text-white rounded-xl hover:bg-orange-700 transition">บันทึกแผนใหม่</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Rename Plan -->
+    <div id="modal-rename" class="fixed inset-0 bg-slate-900/40 backdrop-blur-xs flex items-center justify-center p-4 z-50 hidden">
+        <div class="bg-white rounded-2xl max-w-md w-full border border-slate-200 p-6 shadow-xl space-y-4">
+            <div class="flex justify-between items-center border-b border-slate-100 pb-2">
+                <h3 class="font-black text-slate-900 text-sm">แก้ไขชื่อแผน</h3>
+                <button onclick="closeModal('rename')" class="text-slate-400 hover:text-slate-600 transition">
+                    <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+                </button>
+            </div>
+            <div class="space-y-2">
+                <label class="text-xs text-slate-500 font-bold block">ชื่อแผนใหม่</label>
+                <input id="input-rename-name" type="text" placeholder="ระบุชื่อใหม่ที่นี่..." class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs focus:ring-1 focus:ring-orange-500 focus:bg-white text-slate-800 font-medium" />
+            </div>
+            <div class="flex justify-end gap-2 text-xs font-bold pt-2">
+                <button onclick="closeModal('rename')" class="px-4 py-2 border border-slate-200 text-slate-600 rounded-xl hover:bg-slate-50 transition">ยกเลิก</button>
+                <button onclick="confirmRenamePlan()" class="px-4 py-2 bg-orange-600 text-white rounded-xl hover:bg-orange-700 transition">ยืนยันการเปลี่ยนชื่อ</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Delete Plan -->
+    <div id="modal-delete" class="fixed inset-0 bg-slate-900/40 backdrop-blur-xs flex items-center justify-center p-4 z-50 hidden">
+        <div class="bg-white rounded-2xl max-w-md w-full border border-slate-200 p-6 shadow-xl space-y-4">
+            <div class="flex justify-between items-center border-b border-red-50 pb-2">
+                <h3 class="font-black text-red-600 text-sm flex items-center gap-1">⚠️ ยืนยันการลบแผน</h3>
+                <button onclick="closeModal('delete')" class="text-slate-400 hover:text-slate-600 transition">
+                    <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+                </button>
+            </div>
+            <p class="text-xs text-slate-600 leading-relaxed">
+                คุณแน่ใจหรือไม่ที่จะลบแผนโฆษณานี้? <br />
+                การลบนี้จะทำให้ข้อมูลแผนที่บันทึกไว้หายไปอย่างถาวรและไม่สามารถเรียกคืนได้
+            </p>
+            <div class="flex justify-end gap-2 text-xs font-bold pt-2">
+                <button onclick="closeModal('delete')" class="px-4 py-2 border border-slate-200 text-slate-600 rounded-xl hover:bg-slate-50 transition">ยกเลิก</button>
+                <button onclick="confirmDeletePlan()" class="px-4 py-2 bg-red-600 text-white rounded-xl hover:bg-red-700 transition">ใช่, ฉันต้องการลบแผนนี้</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Reset Confirmation -->
+    <div id="modal-reset" class="fixed inset-0 bg-slate-900/40 backdrop-blur-xs flex items-center justify-center p-4 z-50 hidden">
+        <div class="bg-white rounded-2xl max-w-md w-full border border-slate-200 p-6 shadow-xl space-y-4">
+            <div class="flex justify-between items-center border-b border-red-50 pb-2">
+                <h3 class="font-black text-red-600 text-sm flex items-center gap-1">⚠️ ยืนยันการเคลียร์ข้อมูล</h3>
+                <button onclick="closeModal('reset')" class="text-slate-400 hover:text-slate-600 transition">
+                    <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+                </button>
+            </div>
+            <p class="text-xs text-slate-600 leading-relaxed">
+                คุณแน่ใจหรือไม่ที่จะล้างข้อมูล <strong class="text-slate-900">"ยอดใช้จริงทั้งหมด (Actual Spent)"</strong> และสลับสถานะทุกวันกลับไปเป็น "ค้างบันทึก"? <br />
+                ระบบจะกู้คืนค่าเป้าหมายเดิม (Original Target) ของคุณให้ในทุกวันของเดือนนี้โดยอัตโนมัติ
+            </p>
+            <div class="flex justify-end gap-2 text-xs font-bold pt-2">
+                <button onclick="closeModal('reset')" class="px-4 py-2 border border-slate-200 text-slate-600 rounded-xl hover:bg-slate-50 transition">ยกเลิก</button>
+                <button onclick="confirmResetActuals()" class="px-4 py-2 bg-red-600 text-white rounded-xl hover:bg-red-700 transition">ใช่, ล้างข้อมูลจริงทั้งหมด</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==========================================
+        CORE WEB APPLICATION SCRIPT
+       ========================================== -->
+    <script>
         const DEFAULT_PRESETS = {
           normalShop: 3000,
           normalBanner: 1000,
@@ -125,6 +520,7 @@
           paydayBanner: 2000
         };
 
+        // ข้อมูลตั้งต้นดิบตามไฟล์ภาพ image_4ddbdd.png
         const INITIAL_DAYS_DATA_RAW = [
           { date: 1, type: 'Normal', shopTarget: 5000, shopActual: 5000, bannerTarget: 1000, bannerActual: 0, isCompleted: true },
           { date: 2, type: 'Normal', shopTarget: 5000, shopActual: 5000, bannerTarget: 1000, bannerActual: 0, isCompleted: true },
@@ -159,6 +555,7 @@
           { date: 31, type: 'Normal', shopTarget: 3000, shopActual: 0, bannerTarget: 1000, bannerActual: 0, isCompleted: false },
         ];
 
+        // สร้าง Object โคลนค่าต้นฉบับ
         const INITIAL_DAYS_DATA = INITIAL_DAYS_DATA_RAW.map(d => ({
           ...d,
           originalShopTarget: d.shopTarget,
@@ -167,1064 +564,731 @@
           bannerTarget: d.isCompleted ? d.bannerActual : d.bannerTarget
         }));
 
-        function App() {
-          const [days, setDays] = useState(INITIAL_DAYS_DATA);
-          const [presets, setPresets] = useState(DEFAULT_PRESETS);
-          const [selectedMonth, setSelectedMonth] = useState('03'); // มีนาคม (3.3) เป็นดีฟอลต์
-          const [daysCount, setDaysCount] = useState(31);
-
-          // Saved Plans system
-          const [plans, setPlans] = useState([
+        // ระบบจัดเก็บบนเบราว์เซอร์
+        let state = {
+          days: JSON.parse(JSON.stringify(INITIAL_DAYS_DATA)),
+          presets: { ...DEFAULT_PRESETS },
+          selectedMonth: '03',
+          selectedPlanId: 'default-march',
+          plans: [
             {
               id: 'default-march',
               name: 'แผนหลัก มีนาคม (3.3 Campaign)',
               month: '03',
               presets: { ...DEFAULT_PRESETS },
-              days: [...INITIAL_DAYS_DATA]
-            },
-            {
-              id: 'example-april',
-              name: 'แผนเมษายน (4.4 Splash Sales)',
-              month: '04',
-              presets: { ...DEFAULT_PRESETS, normalShop: 3500, ddayShop: 12000 },
-              days: INITIAL_DAYS_DATA.slice(0, 30).map(d => ({
-                ...d,
-                shopTarget: d.type === 'D-Day' ? 12000 : d.type === 'Normal' ? 3500 : d.shopTarget,
-                originalShopTarget: d.type === 'D-Day' ? 12000 : d.type === 'Normal' ? 3500 : d.shopTarget,
-                shopActual: 0,
-                bannerActual: 0,
-                isCompleted: false
-              }))
+              days: JSON.parse(JSON.stringify(INITIAL_DAYS_DATA))
             }
-          ]);
-          const [selectedPlanId, setSelectedPlanId] = useState('default-march');
+          ]
+        };
 
-          // Custom Modal States
-          const [isSaveModalOpen, setIsSaveModalOpen] = useState(false);
-          const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
-          const [isRenameModalOpen, setIsRenameModalOpen] = useState(false);
-          const [isResetConfirmOpen, setIsResetConfirmOpen] = useState(false);
-          
-          const [planToRename, setPlanToRename] = useState(null);
-          const [planToDelete, setPlanToDelete] = useState(null);
-          const [newPlanName, setNewPlanName] = useState('');
-          const [renameValue, setRenameValue] = useState('');
-
-          useEffect(() => {
-            const daysInMonths = { '02': 28, '04': 30, '06': 30, '09': 30, '11': 30 };
-            const count = daysInMonths[selectedMonth] || 31;
-            setDaysCount(count);
-            
-            setDays(prev => {
-              if (prev.length < count) {
-                const added = Array.from({ length: count - prev.length }, (_, i) => {
-                  const dayNum = prev.length + i + 1;
-                  const initialShop = presets.normalShop;
-                  const initialBanner = presets.normalBanner;
-                  return {
-                    date: dayNum,
-                    type: getDayTypeByRule(dayNum, selectedMonth),
-                    shopTarget: initialShop,
-                    originalShopTarget: initialShop,
-                    shopActual: 0,
-                    bannerTarget: initialBanner,
-                    originalBannerTarget: initialBanner,
-                    bannerActual: 0,
-                    isCompleted: false
-                  };
-                });
-                return [...prev, ...added];
-              } else {
-                return prev.slice(0, count);
-              }
-            });
-          }, [selectedMonth]);
-
-          const getDayTypeByRule = (day, month) => {
-            const doubleDigit = parseInt(month, 10);
-            if (day === doubleDigit) return 'D-Day';
-            if (day >= 24 && day <= 26) return 'Payday';
-            if (day === 15) return 'MidMonth';
-            return 'Normal';
-          };
-
-          const handleCellChange = (date, field, value) => {
-            const numericValue = value === '' ? 0 : Math.max(0, parseInt(value, 10) || 0);
-            setDays(prev => prev.map(day => {
-              if (day.date === date) {
-                const updated = { ...day, [field]: numericValue };
-                
-                if (field === 'shopTarget') {
-                  updated.originalShopTarget = numericValue;
-                }
-                if (field === 'bannerTarget') {
-                  updated.originalBannerTarget = numericValue;
-                }
-
-                // สวิตช์อัตโนมัติเมื่อผู้ใช้ป้อนยอดใช้จริง
-                if (field === 'shopActual' || field === 'bannerActual') {
-                  const hasActualSpent = (updated.shopActual > 0 || updated.bannerActual > 0);
-                  
-                  // บันทึกสถานะเสร็จสิ้น
-                  updated.isCompleted = hasActualSpent;
-                  
-                  if (updated.isCompleted) {
-                    // ปรับค่าเป้าหมาย Target ให้เท่ากับยอดใช้จริง แม้ว่าจะเป็น 0 ก็ตาม
-                    updated.shopTarget = updated.shopActual;
-                    updated.bannerTarget = updated.bannerActual;
-                  } else {
-                    // กู้คืนค่าเป้าหมายเดิม (Original Target) หากเคลียร์ยอดจริงออก
-                    updated.shopTarget = updated.originalShopTarget;
-                    updated.bannerTarget = updated.originalBannerTarget;
-                  }
-                }
-                return updated;
-              }
-              return day;
-            }));
-          };
-
-          const applyPresetToSelectedTypes = (type) => {
-            setDays(prev => prev.map(day => {
-              if (day.type === type) {
-                if (day.isCompleted) return day;
-
-                let shopTarget = day.shopTarget;
-                let bannerTarget = day.bannerTarget;
-                
-                if (type === 'D-Day') {
-                  shopTarget = presets.ddayShop;
-                  bannerTarget = presets.ddayBanner;
-                } else if (type === 'MidMonth') {
-                  shopTarget = presets.midMonthShop;
-                  bannerTarget = presets.midMonthBanner;
-                } else if (type === 'Payday') {
-                  shopTarget = presets.paydayShop;
-                  bannerTarget = presets.paydayBanner;
-                } else {
-                  shopTarget = presets.normalShop;
-                  bannerTarget = presets.normalBanner;
-                }
-
-                return { 
-                  ...day, 
-                  shopTarget, 
-                  originalShopTarget: shopTarget, 
-                  bannerTarget, 
-                  originalBannerTarget: bannerTarget 
-                };
-              }
-              return day;
-            }));
-          };
-
-          const applyAllPresets = () => {
-            setDays(prev => prev.map(day => {
-              if (day.isCompleted) return day;
-
-              let shopTarget = presets.normalShop;
-              let bannerTarget = presets.normalBanner;
-              
-              if (day.type === 'D-Day') {
-                shopTarget = presets.ddayShop;
-                bannerTarget = presets.ddayBanner;
-              } else if (day.type === 'MidMonth') {
-                shopTarget = presets.midMonthShop;
-                bannerTarget = presets.midMonthBanner;
-              } else if (day.type === 'Payday') {
-                shopTarget = presets.paydayShop;
-                bannerTarget = presets.paydayBanner;
-              }
-
-              return { 
-                ...day, 
-                shopTarget, 
-                originalShopTarget: shopTarget, 
-                bannerTarget, 
-                originalBannerTarget: bannerTarget 
-              };
-            }));
-          };
-
-          const confirmResetActuals = () => {
-            setDays(prev => prev.map(day => ({
-              ...day,
-              shopActual: 0,
-              bannerActual: 0,
-              shopTarget: day.originalShopTarget,
-              bannerTarget: day.originalBannerTarget,
-              isCompleted: false
-            })));
-            setIsResetConfirmOpen(false);
-          };
-
-          const calculations = useMemo(() => {
-            let totalShopTarget = 0;
-            let totalShopActual = 0;
-            let totalBannerTarget = 0;
-            let totalBannerActual = 0;
-            let completedDaysCount = 0;
-
-            days.forEach(day => {
-              totalShopTarget += day.shopTarget;
-              totalBannerTarget += day.bannerTarget;
-              
-              if (day.isCompleted) {
-                totalShopActual += day.shopActual;
-                totalBannerActual += day.bannerActual;
-                completedDaysCount++;
-              }
-            });
-
-            const totalTarget = totalShopTarget + totalBannerTarget;
-            const totalActual = totalShopActual + totalBannerActual;
-            const spentPercent = totalTarget > 0 ? (totalActual / totalTarget) * 100 : 0;
-            const remainingBudget = Math.max(0, totalTarget - totalActual);
-            const remainingDaysCount = daysCount - completedDaysCount;
-
-            let cumulativeOriginalPlannedSoFar = 0;
-            days.forEach(day => {
-              if (day.isCompleted) {
-                cumulativeOriginalPlannedSoFar += (day.originalShopTarget + day.originalBannerTarget);
-              }
-            });
-
-            const pacingGap = cumulativeOriginalPlannedSoFar - totalActual;
-            const recommendedDailySpend = remainingDaysCount > 0 ? remainingBudget / remainingDaysCount : 0;
-
-            return {
-              totalShopTarget,
-              totalShopActual,
-              totalBannerTarget,
-              totalBannerActual,
-              totalTarget,
-              totalActual,
-              spentPercent,
-              remainingBudget,
-              completedDaysCount,
-              remainingDaysCount,
-              cumulativeOriginalPlannedSoFar,
-              pacingGap,
-              recommendedDailySpend
-            };
-          }, [days, daysCount]);
-
-          const handleLoadPlan = (planId) => {
-            const selectedPlan = plans.find(p => p.id === planId);
-            if (selectedPlan) {
-              setSelectedPlanId(planId);
-              setSelectedMonth(selectedPlan.month);
-              setPresets(selectedPlan.presets);
-              setDays(selectedPlan.days);
-            }
-          };
-
-          const handleSaveAsNewPlan = () => {
-            if (!newPlanName.trim()) return;
-            const newId = 'plan-' + Date.now();
-            const newPlan = {
-              id: newId,
-              name: newPlanName.trim(),
-              month: selectedMonth,
-              presets: { ...presets },
-              days: [...days]
-            };
-            setPlans(prev => [...prev, newPlan]);
-            setSelectedPlanId(newId);
-            setNewPlanName('');
-            setIsSaveModalOpen(false);
-          };
-
-          const handleQuickSaveCurrent = () => {
-            setPlans(prev => prev.map(p => {
-              if (p.id === selectedPlanId) {
-                return {
-                  ...p,
-                  month: selectedMonth,
-                  presets: { ...presets },
-                  days: [...days]
-                };
-              }
-              return p;
-            }));
-          };
-
-          const handleOpenRenameModal = (plan) => {
-            setPlanToRename(plan);
-            setRenameValue(plan.name);
-            setIsRenameModalOpen(true);
-          };
-
-          const handleSaveRename = () => {
-            if (!renameValue.trim() || !planToRename) return;
-            setPlans(prev => prev.map(p => {
-              if (p.id === planToRename.id) {
-                return { ...p, name: renameValue.trim() };
-              }
-              return p;
-            }));
-            setPlanToRename(null);
-            setIsRenameModalOpen(false);
-          };
-
-          const handleOpenDeleteModal = (plan) => {
-            setPlanToDelete(plan);
-            setIsDeleteModalOpen(true);
-          };
-
-          const handleConfirmDelete = () => {
-            if (!planToDelete) return;
-            const filteredPlans = plans.filter(p => p.id !== planToDelete.id);
-            setPlans(filteredPlans);
-            
-            if (selectedPlanId === planToDelete.id && filteredPlans.length > 0) {
-              handleLoadPlan(filteredPlans[0].id);
-            }
-            setPlanToDelete(null);
-            setIsDeleteModalOpen(false);
-          };
-
-          return (
-            <div className="min-h-screen bg-slate-50 text-slate-800 p-4 md:p-6 font-sans">
-              <div className="max-w-7xl mx-auto space-y-4">
-                
-                {/* Header Block */}
-                <header className="flex flex-col md:flex-row justify-between items-start md:items-center bg-white border border-slate-200 rounded-2xl p-5 shadow-sm gap-4">
-                  <div className="space-y-1">
-                    <div className="flex items-center gap-2">
-                      <span className="p-1.5 bg-orange-600 rounded-lg text-white font-black text-xs tracking-wider">SHOPEE</span>
-                      <h1 className="text-xl font-extrabold text-slate-900 tracking-tight">Smart Budget Planner</h1>
-                    </div>
-                    <p className="text-slate-500 text-xs">เครื่องมือจัดสรรงบแอดรายวัน สำหรับกระตุ้นยอดขายพร้อมระบบเกลี่ยเงินอัตโนมัติ</p>
-                  </div>
-                  
-                  <div className="flex flex-wrap items-center gap-3 w-full md:w-auto">
-                    {/* Month selector */}
-                    <div className="bg-slate-100 p-1.5 rounded-xl flex items-center border border-slate-200 text-xs">
-                      <span className="px-2 text-slate-500 font-medium">เลือกเดือน:</span>
-                      <select 
-                        value={selectedMonth} 
-                        onChange={(e) => setSelectedMonth(e.target.value)}
-                        className="bg-white border border-slate-200 text-orange-600 font-bold focus:ring-1 focus:ring-orange-500 rounded-lg cursor-pointer py-1 px-2"
-                      >
-                        <option value="01">มกราคม (1.1)</option>
-                        <option value="02">กุมภาพันธ์ (2.2)</option>
-                        <option value="03">มีนาคม (3.3)</option>
-                        <option value="04">เมษายน (4.4)</option>
-                        <option value="05">พฤษภาคม (5.5)</option>
-                        <option value="06">มิถุนายน (6.6)</option>
-                        <option value="07">กรกฎาคม (7.7)</option>
-                        <option value="08">สิงหาคม (8.8)</option>
-                        <option value="09">กันยายน (9.9)</option>
-                        <option value="10">ตุลาคม (10.10)</option>
-                        <option value="11">พฤศจิกายน (11.11)</option>
-                        <option value="12">ธันวาคม (12.12)</option>
-                      </select>
-                    </div>
-                    
-                    {/* Reset button */}
-                    <button 
-                      onClick={() => setIsResetConfirmOpen(true)}
-                      className="px-3 py-1.5 text-xs bg-white hover:bg-red-50 border border-slate-200 text-red-600 hover:border-red-300 transition duration-150 rounded-xl flex items-center gap-2 font-semibold shadow-sm ml-auto md:ml-0"
-                    >
-                      <IconRefreshCw className="w-3 h-3" /> ล้างยอดใช้จริง
-                    </button>
-                  </div>
-                </header>
-
-                {/* Compact Save Plans Section */}
-                <section className="bg-white border border-slate-200 rounded-2xl p-3 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-3">
-                  <div className="flex items-center gap-2 min-w-[180px]">
-                    <div className="p-1.5 bg-indigo-50 text-indigo-600 rounded-lg">
-                      <IconFileText className="w-4 h-4" />
-                    </div>
-                    <div>
-                      <h3 className="font-bold text-slate-800 text-xs">แผนงบที่บันทึกไว้</h3>
-                      <p className="text-[10px] text-slate-400">สลับ หรือปรับแต่งแบรนช์งานของคุณ</p>
-                    </div>
-                  </div>
-
-                  <div className="flex flex-wrap items-center gap-2 flex-1 justify-start md:justify-end">
-                    {plans.map(plan => {
-                      const isActive = plan.id === selectedPlanId;
-                      return (
-                        <div 
-                          key={plan.id}
-                          className={`group relative pl-3 pr-2 py-1.5 rounded-xl border transition-all duration-150 flex items-center gap-2 text-xs ${
-                            isActive 
-                              ? 'bg-orange-50 border-orange-300 ring-1 ring-orange-400/10 font-bold text-orange-800' 
-                              : 'bg-slate-50 border-slate-200 hover:bg-slate-100 text-slate-600'
-                          }`}
-                        >
-                          <button 
-                            onClick={() => handleLoadPlan(plan.id)}
-                            className="truncate max-w-[140px] text-left font-semibold"
-                            title={plan.name}
-                          >
-                            {plan.name}
-                          </button>
-                          
-                          <div className="flex items-center gap-0.5 opacity-60 group-hover:opacity-100 transition-opacity">
-                            <button 
-                              onClick={() => handleOpenRenameModal(plan)}
-                              className="p-0.5 hover:text-slate-900 rounded hover:bg-slate-200/50"
-                              title="แก้ไขชื่อแผน"
-                            >
-                              <IconEdit2 className="w-3 h-3" />
-                            </button>
-                            <button 
-                              onClick={() => handleOpenDeleteModal(plan)}
-                              className="p-0.5 hover:text-red-600 rounded hover:bg-red-50"
-                              title="ลบแผนนี้"
-                            >
-                              <IconTrash2 className="w-3 h-3" />
-                            </button>
-                          </div>
-                        </div>
-                      );
-                    })}
-                    
-                    <div className="h-4 w-[1px] bg-slate-200 mx-1 hidden sm:block"></div>
-
-                    <button
-                      onClick={handleQuickSaveCurrent}
-                      className="px-2.5 py-1.5 border border-emerald-200 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 rounded-xl text-[11px] font-bold transition duration-150 flex items-center gap-1 shadow-sm"
-                      title="เซฟบันทึกการเปลี่ยนแปลงของแผนปัจจุบันนี้ทันที"
-                    >
-                      <IconSave className="w-3 h-3" /> บันทึกปัจจุบัน
-                    </button>
-                    
-                    <button
-                      onClick={() => setIsSaveModalOpen(true)}
-                      className="px-2.5 py-1.5 bg-orange-600 hover:bg-orange-700 text-white rounded-xl text-[11px] font-bold transition duration-150 flex items-center gap-1 shadow-sm"
-                    >
-                      <IconPlus className="w-3 h-3" /> สร้างแผนใหม่
-                    </button>
-                  </div>
-                </section>
-
-                <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
-                  
-                  {/* Card 1: Total Budget */}
-                  <div className="bg-white border border-slate-200 rounded-2xl p-4 shadow-sm flex flex-col justify-between">
-                    <div className="flex justify-between items-start">
-                      <span className="text-slate-500 text-[10px] font-bold uppercase tracking-wider">งบประมาณตามแผน</span>
-                      <span className="p-1 bg-blue-50 text-blue-600 rounded-lg"><IconCalendar className="w-3.5 h-3.5" /></span>
-                    </div>
-                    <div className="mt-2">
-                      <h3 className="text-xl font-extrabold text-slate-900">฿{calculations.totalTarget.toLocaleString()}</h3>
-                      <div className="flex gap-2 text-slate-400 text-[10px] mt-1 font-medium">
-                        <span>Shop: ฿{calculations.totalShopTarget.toLocaleString()}</span>
-                        <span>•</span>
-                        <span>Banner: ฿{calculations.totalBannerTarget.toLocaleString()}</span>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Card 2: Actual Spent */}
-                  <div className="bg-white border border-slate-200 rounded-2xl p-4 shadow-sm flex flex-col justify-between">
-                    <div className="flex justify-between items-start">
-                      <span className="text-slate-500 text-[10px] font-bold uppercase tracking-wider">ใช้จริงสะสม</span>
-                      <span className="p-1 bg-orange-50 text-orange-600 rounded-lg"><IconDollarSign className="w-3.5 h-3.5" /></span>
-                    </div>
-                    <div className="mt-2">
-                      <h3 className="text-xl font-extrabold text-orange-600">฿{calculations.totalActual.toLocaleString()}</h3>
-                      <div className="flex items-center gap-1.5 mt-1">
-                        <div className="w-full bg-slate-100 h-1.5 rounded-full overflow-hidden border border-slate-200/50">
-                          <div 
-                            className="bg-orange-500 h-1.5 rounded-full" 
-                            style={{ width: `${Math.min(100, calculations.spentPercent)}%` }}
-                          />
-                        </div>
-                        <span className="text-[10px] font-bold text-orange-600 whitespace-nowrap">{calculations.spentPercent.toFixed(1)}%</span>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Card 3: Remaining Budget */}
-                  <div className="bg-white border border-slate-200 rounded-2xl p-4 shadow-sm flex flex-col justify-between">
-                    <div className="flex justify-between items-start">
-                      <span className="text-slate-500 text-[10px] font-bold uppercase tracking-wider">งบเหลือในระบบ</span>
-                      <span className="p-1 bg-emerald-50 text-emerald-600 rounded-lg"><IconTrendingUp className="w-3.5 h-3.5" /></span>
-                    </div>
-                    <div className="mt-2">
-                      <h3 className="text-xl font-extrabold text-emerald-600">฿{calculations.remainingBudget.toLocaleString()}</h3>
-                      <p className="text-slate-400 text-[10px] mt-1 font-medium">
-                        บันทึกแล้ว {calculations.completedDaysCount} จาก {daysCount} วัน
-                      </p>
-                    </div>
-                  </div>
-
-                  {/* Card 4: Roll-Over Budget */}
-                  <div className="bg-white border border-slate-200 rounded-2xl p-4 shadow-sm flex flex-col justify-between">
-                    <div className="flex justify-between items-start">
-                      <span className="text-slate-500 text-[10px] font-bold uppercase tracking-wider">งบประหยัดสะสม (Roll-Over)</span>
-                      <span className="p-1 bg-purple-50 text-purple-600 rounded-lg"><IconRefreshCw className="w-3.5 h-3.5" /></span>
-                    </div>
-                    <div className="mt-2">
-                      <h3 className={`text-xl font-extrabold ${calculations.pacingGap >= 0 ? 'text-purple-600' : 'text-rose-600'}`}>
-                        {calculations.pacingGap >= 0 ? '+' : ''}฿{calculations.pacingGap.toLocaleString()}
-                      </h3>
-                      <p className="text-slate-400 text-[10px] mt-1 flex items-center gap-1 font-medium">
-                        <IconAlertCircle className="w-2.5 h-2.5 text-purple-500" />
-                        {calculations.pacingGap >= 0 ? 'ใช้น้อยกว่าเป้า เกลี่ยไปวันอื่น' : 'ใช้เกินเป้าที่สะสม'}
-                      </p>
-                    </div>
-                  </div>
-
-                  {/* Card 5: Recommended Spend Target */}
-                  <div className="bg-orange-50 border-2 border-orange-500/30 rounded-2xl p-4 shadow-sm flex flex-col justify-between">
-                    <div className="flex justify-between items-start">
-                      <span className="text-orange-800 text-[10px] font-bold uppercase tracking-wider">เฉลี่ยงบที่เหลือ (แนะนำ)</span>
-                      <span className="p-1 bg-orange-100 text-orange-600 rounded-lg"><IconFlame className="w-3.5 h-3.5" /></span>
-                    </div>
-                    <div className="mt-2">
-                      <h3 className="text-xl font-black text-orange-700">
-                        ฿{Math.round(calculations.recommendedDailySpend).toLocaleString()} <span className="text-[10px] font-normal text-slate-500">/ วัน</span>
-                      </h3>
-                      <p className="text-slate-500 text-[10px] mt-1 font-medium">
-                        เฉลี่ยโควตาสำหรับ {calculations.remainingDaysCount} วันที่เหลือ
-                      </p>
-                    </div>
-                  </div>
-
-                </section>
-
-                <section className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm space-y-4">
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-3">
-                    <h2 className="text-sm font-extrabold text-slate-800 flex items-center gap-1.5">
-                      <span>⚡</span> จัดการแม่แบบงบด่วน (Smart Preset Allocator)
-                    </h2>
-                    <div className="flex items-center gap-2">
-                      <span className="text-slate-400 text-xs hidden lg:inline font-medium">ป้อนงบแล้วกดกระจายเพื่อลงคิวแคมเปญในวันที่เหลือทันที:</span>
-                      <button 
-                        onClick={applyAllPresets}
-                        className="px-4 py-1.5 bg-gradient-to-r from-orange-500 to-amber-600 hover:from-orange-600 hover:to-amber-700 font-extrabold text-xs text-white rounded-xl shadow-sm transition duration-150 flex items-center gap-1.5"
-                      >
-                        <span>⚡</span> กระจายงบ
-                      </button>
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                    
-                    {/* Normal Day */}
-                    <div className="bg-slate-50 p-3 rounded-xl border border-slate-150 space-y-2">
-                      <div className="flex justify-between items-center">
-                        <span className="font-bold text-xs text-blue-600">วันธรรมดา (Normal Day)</span>
-                        <button 
-                          onClick={() => applyPresetToSelectedTypes('Normal')}
-                          className="px-2 py-0.5 bg-blue-100 hover:bg-blue-200 text-blue-700 rounded-lg text-[9px] font-bold transition"
-                        >
-                          อัปเดตกลุ่มนี้
-                        </button>
-                      </div>
-                      <div className="grid grid-cols-2 gap-2 text-xs">
-                        <div>
-                          <label className="text-[10px] text-slate-500 block mb-0.5">Shop Ads</label>
-                          <input 
-                            type="number" 
-                            value={presets.normalShop}
-                            onChange={(e) => setPresets(p => ({ ...p, normalShop: parseInt(e.target.value, 10) || 0 }))}
-                            className="w-full bg-white border border-slate-200 rounded-lg p-1 text-slate-800 text-center font-bold"
-                          />
-                        </div>
-                        <div>
-                          <label className="text-[10px] text-slate-500 block mb-0.5">Banner Ads</label>
-                          <input 
-                            type="number" 
-                            value={presets.normalBanner}
-                            onChange={(e) => setPresets(p => ({ ...p, normalBanner: parseInt(e.target.value, 10) || 0 }))}
-                            className="w-full bg-white border border-slate-200 rounded-lg p-1 text-slate-800 text-center font-bold"
-                          />
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* D-Day */}
-                    <div className="bg-rose-50/40 p-3 rounded-xl border border-rose-100 space-y-2">
-                      <div className="flex justify-between items-center">
-                        <span className="font-bold text-xs text-rose-600">วันดับเบิ้ล (D-Day เลขคู่)</span>
-                        <button 
-                          onClick={() => applyPresetToSelectedTypes('D-Day')}
-                          className="px-2 py-0.5 bg-rose-100 hover:bg-rose-200 text-rose-700 rounded-lg text-[9px] font-bold transition"
-                        >
-                          อัปเดตกลุ่มนี้
-                        </button>
-                      </div>
-                      <div className="grid grid-cols-2 gap-2 text-xs">
-                        <div>
-                          <label className="text-[10px] text-slate-500 block mb-0.5">Shop Ads</label>
-                          <input 
-                            type="number" 
-                            value={presets.ddayShop}
-                            onChange={(e) => setPresets(p => ({ ...p, ddayShop: parseInt(e.target.value, 10) || 0 }))}
-                            className="w-full bg-white border border-rose-200 rounded-lg p-1 text-rose-700 text-center font-bold"
-                          />
-                        </div>
-                        <div>
-                          <label className="text-[10px] text-slate-500 block mb-0.5">Banner Ads</label>
-                          <input 
-                            type="number" 
-                            value={presets.ddayBanner}
-                            onChange={(e) => setPresets(p => ({ ...p, ddayBanner: parseInt(e.target.value, 10) || 0 }))}
-                            className="w-full bg-white border border-rose-200 rounded-lg p-1 text-rose-700 text-center font-bold"
-                          />
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Mid-Month */}
-                    <div className="bg-amber-50/40 p-3 rounded-xl border border-amber-150 space-y-2">
-                      <div className="flex justify-between items-center">
-                        <span className="font-bold text-xs text-amber-700">กลางเดือน (Mid-Month)</span>
-                        <button 
-                          onClick={() => applyPresetToSelectedTypes('MidMonth')}
-                          className="px-2 py-0.5 bg-amber-100 hover:bg-amber-200 text-amber-800 rounded-lg text-[9px] font-bold transition"
-                        >
-                          อัปเดตกลุ่มนี้
-                        </button>
-                      </div>
-                      <div className="grid grid-cols-2 gap-2 text-xs">
-                        <div>
-                          <label className="text-[10px] text-slate-500 block mb-0.5">Shop Ads</label>
-                          <input 
-                            type="number" 
-                            value={presets.midMonthShop}
-                            onChange={(e) => setPresets(p => ({ ...p, midMonthShop: parseInt(e.target.value, 10) || 0 }))}
-                            className="w-full bg-white border border-amber-200 rounded-lg p-1 text-amber-700 text-center font-bold"
-                          />
-                        </div>
-                        <div>
-                          <label className="text-[10px] text-slate-500 block mb-0.5">Banner Ads</label>
-                          <input 
-                            type="number" 
-                            value={presets.midMonthBanner}
-                            onChange={(e) => setPresets(p => ({ ...p, midMonthBanner: parseInt(e.target.value, 10) || 0 }))}
-                            className="w-full bg-white border border-amber-200 rounded-lg p-1 text-amber-700 text-center font-bold"
-                          />
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Payday */}
-                    <div className="bg-purple-50/40 p-3 rounded-xl border border-purple-100 space-y-2">
-                      <div className="flex justify-between items-center">
-                        <span className="font-bold text-xs text-purple-700">เงินเดือนออก (Payday)</span>
-                        <button 
-                          onClick={() => applyPresetToSelectedTypes('Payday')}
-                          className="px-2 py-0.5 bg-purple-100 hover:bg-purple-200 text-purple-700 rounded-lg text-[9px] font-bold transition"
-                        >
-                          อัปเดตกลุ่มนี้
-                        </button>
-                      </div>
-                      <div className="grid grid-cols-2 gap-2 text-xs">
-                        <div>
-                          <label className="text-[10px] text-slate-500 block mb-0.5">Shop Ads</label>
-                          <input 
-                            type="number" 
-                            value={presets.paydayShop}
-                            onChange={(e) => setPresets(p => ({ ...p, paydayShop: parseInt(e.target.value, 10) || 0 }))}
-                            className="w-full bg-white border border-purple-200 rounded-lg p-1 text-purple-700 text-center font-bold"
-                          />
-                        </div>
-                        <div>
-                          <label className="text-[10px] text-slate-500 block mb-0.5">Banner Ads</label>
-                          <input 
-                            type="number" 
-                            value={presets.paydayBanner}
-                            onChange={(e) => setPresets(p => ({ ...p, paydayBanner: parseInt(e.target.value, 10) || 0 }))}
-                            className="w-full bg-white border border-purple-200 rounded-lg p-1 text-purple-700 text-center font-bold"
-                          />
-                        </div>
-                      </div>
-                    </div>
-
-                  </div>
-                </section>
-
-                <section className="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden">
-                  <div className="p-4 border-b border-slate-100 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-slate-50/50">
-                    <div>
-                      <h3 className="text-sm font-extrabold text-slate-900">📅 ตารางจัดสรรงบรายวัน (Campaign Tracker Table)</h3>
-                      <p className="text-slate-400 text-xs mt-0.5">ปรับเป้าหมาย (Target) หรือยอดใช้จริง (Actual) ยอดผลรวมของแผนและตัวเลขเกลี่ยงบส่วนต่างที่เหลือจะอัปเดตให้อัตโนมัติ</p>
-                    </div>
-                    
-                    <div className="flex gap-2 text-[10px] flex-wrap">
-                      <span className="px-2 py-0.5 rounded-lg bg-rose-50 border border-rose-200 text-rose-700 flex items-center gap-1 font-semibold">
-                        <span className="w-1.5 h-1.5 rounded-full bg-rose-500"></span> D-Day (คู่)
-                      </span>
-                      <span className="px-2 py-0.5 rounded-lg bg-purple-50 border border-purple-200 text-purple-700 flex items-center gap-1 font-semibold">
-                        <span className="w-1.5 h-1.5 rounded-full bg-purple-500"></span> Payday
-                      </span>
-                      <span className="px-2 py-0.5 rounded-lg bg-amber-50 border border-amber-200 text-amber-700 flex items-center gap-1 font-semibold">
-                        <span className="w-1.5 h-1.5 rounded-full bg-amber-500"></span> Mid-Month
-                      </span>
-                    </div>
-                  </div>
-
-                  <div className="overflow-x-auto">
-                    <table className="w-full text-left border-collapse text-xs md:text-sm">
-                      <thead className="bg-slate-100 border-b border-slate-200 text-slate-600 uppercase font-bold text-[10px] tracking-wider">
-                        <tr>
-                          <th className="py-3 px-3 text-center w-12 text-slate-700">วันที่</th>
-                          <th className="py-3 px-3 w-32 text-slate-700">ประเภทแคมเปญ</th>
-                          <th className="py-3 px-3 text-right bg-blue-50/30 text-blue-800">Shop Ads Target</th>
-                          <th className="py-3 px-3 text-right bg-orange-50/30 text-orange-800">Shop Actual Spent</th>
-                          <th className="py-3 px-3 text-right bg-blue-50/30 text-blue-800">Banner Target</th>
-                          <th className="py-3 px-3 text-right bg-orange-50/30 text-orange-800">Banner Actual Spent</th>
-                          <th className="py-3 px-3 text-right font-bold text-slate-800 border-l border-slate-200 bg-slate-50/50">Total Planned</th>
-                          <th className="py-3 px-3 text-right font-bold text-slate-800 bg-slate-50/50">Total Actual</th>
-                          <th className="py-3 px-3 text-right font-bold text-slate-800 bg-slate-50/50">ส่วนต่างแผนเดิม (Variance)</th>
-                          <th className="py-3 px-3 text-center">บันทึกผล</th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-slate-100 text-xs">
-                        {days.map((day) => {
-                          const dayTotalTarget = day.shopTarget + day.bannerTarget;
-                          const dayTotalActual = day.shopActual + day.bannerActual;
-                          
-                          const originalDayTotalTarget = day.originalShopTarget + day.originalBannerTarget;
-                          const variance = day.isCompleted ? (dayTotalActual - originalDayTotalTarget) : 0;
-                          
-                          let rowBgClass = "hover:bg-slate-50/50";
-                          if (day.type === 'D-Day') {
-                            rowBgClass = "bg-rose-50/10 hover:bg-rose-50/20";
-                          } else if (day.type === 'Payday') {
-                            rowBgClass = "bg-purple-50/10 hover:bg-purple-50/20";
-                          } else if (day.type === 'MidMonth') {
-                            rowBgClass = "bg-amber-50/10 hover:bg-amber-50/20";
-                          }
-
-                          return (
-                            <tr key={day.date} className={`${rowBgClass} transition duration-150`}>
-                              {/* Date */}
-                              <td className="py-2.5 px-3 text-center font-bold text-slate-700 text-xs">{day.date}</td>
-                              
-                              {/* Campaign Type */}
-                              <td className="py-2.5 px-3">
-                                <select
-                                  value={day.type}
-                                  disabled={day.isCompleted}
-                                  onChange={(e) => {
-                                    const newType = e.target.value;
-                                    setDays(prev => prev.map(d => d.date === day.date ? { ...d, type: newType } : d));
-                                  }}
-                                  className={`w-full text-[11px] p-1 rounded-lg font-bold border-slate-200 border cursor-pointer focus:ring-1 focus:ring-orange-500 focus:border-orange-500 disabled:opacity-75 ${
-                                    day.type === 'D-Day' ? 'bg-rose-50 text-rose-700 border-rose-150' :
-                                    day.type === 'Payday' ? 'bg-purple-50 text-purple-700 border-purple-150' :
-                                    day.type === 'MidMonth' ? 'bg-amber-50 text-amber-700 border-amber-150' :
-                                    'bg-slate-50 text-slate-600'
-                                  }`}
-                                >
-                                  <option value="Normal">Normal Day</option>
-                                  <option value="D-Day">🔥 D-Day (คู่)</option>
-                                  <option value="MidMonth">⭐ Mid-Month</option>
-                                  <option value="Payday">💰 Payday</option>
-                                </select>
-                              </td>
-
-                              {/* Shop Ads Target */}
-                              <td className="py-1.5 px-2 bg-blue-50/10">
-                                <input
-                                  type="text"
-                                  value={day.shopTarget === 0 ? '0' : day.shopTarget}
-                                  placeholder="0"
-                                  disabled={day.isCompleted}
-                                  onChange={(e) => handleCellChange(day.date, 'shopTarget', e.target.value)}
-                                  className="w-full bg-white border border-slate-200 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 rounded-lg px-2 py-0.5 text-right text-slate-800 font-semibold disabled:bg-slate-50 disabled:text-slate-500"
-                                />
-                                {day.isCompleted && day.shopTarget !== day.originalShopTarget && (
-                                  <div className="text-[10px] text-slate-400 text-right mt-0.5 pr-1 font-medium">
-                                    แผนเดิม: ฿{day.originalShopTarget.toLocaleString()}
-                                  </div>
-                                )}
-                              </td>
-
-                              {/* Shop Ads Actual */}
-                              <td className="py-1.5 px-2 bg-orange-50/10">
-                                <input
-                                  type="text"
-                                  value={day.shopActual === 0 ? '' : day.shopActual}
-                                  placeholder="0"
-                                  onChange={(e) => handleCellChange(day.date, 'shopActual', e.target.value)}
-                                  className="w-full bg-white border border-slate-300 focus:border-orange-500 focus:ring-1 focus:ring-orange-500 rounded-lg px-2 py-0.5 text-right text-orange-600 font-extrabold"
-                                />
-                              </td>
-
-                              {/* Banner Target */}
-                              <td className="py-1.5 px-2 bg-blue-50/10">
-                                <input
-                                  type="text"
-                                  value={day.bannerTarget === 0 ? '0' : day.bannerTarget}
-                                  placeholder="0"
-                                  disabled={day.isCompleted}
-                                  onChange={(e) => handleCellChange(day.date, 'bannerTarget', e.target.value)}
-                                  className="w-full bg-white border border-slate-200 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 rounded-lg px-2 py-0.5 text-right text-slate-800 font-semibold disabled:bg-slate-50 disabled:text-slate-500"
-                                />
-                                {day.isCompleted && day.bannerTarget !== day.originalBannerTarget && (
-                                  <div className="text-[10px] text-slate-400 text-right mt-0.5 pr-1 font-medium">
-                                    แผนเดิม: ฿{day.originalBannerTarget.toLocaleString()}
-                                  </div>
-                                )}
-                              </td>
-
-                              {/* Banner Actual */}
-                              <td className="py-1.5 px-2 bg-orange-50/10">
-                                <input
-                                  type="text"
-                                  value={day.bannerActual === 0 ? '' : day.bannerActual}
-                                  placeholder="0"
-                                  onChange={(e) => handleCellChange(day.date, 'bannerActual', e.target.value)}
-                                  className="w-full bg-white border border-slate-300 focus:border-orange-500 focus:ring-1 focus:ring-orange-500 rounded-lg px-2 py-0.5 text-right text-orange-600 font-extrabold"
-                                />
-                              </td>
-
-                              {/* Total Target */}
-                              <td className="py-2.5 px-3 text-right font-semibold text-slate-700 border-l border-slate-150 bg-slate-50/30">
-                                ฿{dayTotalTarget.toLocaleString()}
-                              </td>
-
-                              {/* Total Actual */}
-                              <td className="py-2.5 px-3 text-right font-bold text-slate-900 bg-slate-50/30">
-                                {day.isCompleted ? `฿${dayTotalActual.toLocaleString()}` : '฿0'}
-                              </td>
-
-                              {/* Variance against original target */}
-                              <td className="py-2.5 px-3 text-right bg-slate-50/30">
-                                {day.isCompleted ? (
-                                  variance === 0 ? (
-                                    <span className="text-slate-400 font-medium">สอดคล้องเป้า</span>
-                                  ) : variance < 0 ? (
-                                    <span className="text-emerald-600 font-bold">-{Math.abs(variance).toLocaleString()} (ประหยัดแอด)</span>
-                                  ) : (
-                                    <span className="text-rose-600 font-bold text-xs">+{variance.toLocaleString()} (แอดล้นแผน)</span>
-                                  )
-                                ) : (
-                                  <span className="text-slate-400 font-light">-</span>
-                                )}
-                              </td>
-
-                              {/* Status Button Toggle */}
-                              <td className="py-2.5 px-3 text-center">
-                                <button
-                                  onClick={() => {
-                                    setDays(prev => prev.map(d => {
-                                      if (d.date === day.date) {
-                                        const nextCompleted = !d.isCompleted;
-                                        return {
-                                          ...d,
-                                          isCompleted: nextCompleted,
-                                          // ปรับค่า Target ให้เท่ากับ Actual ทันที (แม้ว่าจะเป็น 0) หากยกเลิกจะกู้คืนค่า Original
-                                          shopTarget: nextCompleted ? d.shopActual : d.originalShopTarget,
-                                          bannerTarget: nextCompleted ? d.bannerActual : d.originalBannerTarget,
-                                        };
-                                      }
-                                      return d;
-                                    }));
-                                  }}
-                                  className={`px-3 py-1 rounded-full text-[10px] font-bold tracking-wide transition-all ${
-                                    day.isCompleted 
-                                      ? 'bg-emerald-100 text-emerald-800 hover:bg-emerald-200' 
-                                      : 'bg-slate-100 text-slate-400 hover:text-slate-600 hover:bg-slate-200'
-                                  }`}
-                                >
-                                  {day.isCompleted ? '✓ บันทึกแล้ว' : 'ค้างบันทึก'}
-                                </button>
-                              </td>
-                            </tr>
-                          );
-                        })}
-                      </tbody>
-
-                      {/* TFoot totals */}
-                      <tfoot className="bg-slate-100 border-t border-slate-200 font-bold text-slate-700 text-xs">
-                        <tr>
-                          <td className="py-4 px-3 text-center text-slate-900 font-extrabold">รวม</td>
-                          <td className="py-4 px-3"></td>
-                          <td className="py-4 px-3 text-right bg-blue-50/50 text-blue-800 text-xs font-extrabold">฿{calculations.totalShopTarget.toLocaleString()}</td>
-                          <td className="py-4 px-3 text-right bg-orange-50/50 text-orange-800 text-xs font-extrabold">฿{calculations.totalShopActual.toLocaleString()}</td>
-                          <td className="py-4 px-3 text-right bg-blue-50/50 text-blue-800 text-xs font-extrabold">฿{calculations.totalBannerTarget.toLocaleString()}</td>
-                          <td className="py-4 px-3 text-right bg-orange-50/50 text-orange-800 text-xs font-extrabold">฿{calculations.totalBannerActual.toLocaleString()}</td>
-                          <td className="py-4 px-3 text-right text-slate-900 text-xs border-l border-slate-200 font-extrabold">฿{calculations.totalTarget.toLocaleString()}</td>
-                          <td className="py-4 px-3 text-right text-orange-600 text-xs font-extrabold">฿{calculations.totalActual.toLocaleString()}</td>
-                          <td className="py-4 px-3 text-right text-xs">
-                            {calculations.pacingGap >= 0 ? (
-                              <span className="text-purple-700">งบส่วนต่างบวก: ฿{calculations.pacingGap.toLocaleString()}</span>
-                            ) : (
-                              <span className="text-rose-700">งบส่วนต่างติดลบ: ฿{Math.abs(calculations.pacingGap).toLocaleString()}</span>
-                            )}
-                          </td>
-                          <td className="py-4 px-3"></td>
-                        </tr>
-                      </tfoot>
-                    </table>
-                  </div>
-                </section>
-
-                {/* Dynamic tips section */}
-                <footer className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm text-slate-500 text-[11px] space-y-2">
-                  <h4 className="font-bold text-slate-800 text-xs flex items-center gap-1">
-                    <span className="text-orange-500">💡</span> คำชี้แจงระบบเกลี่ยเงินโฆษณาสะสม (Roll-Over Campaign Strategy):
-                  </h4>
-                  <p>• เมื่อทำการ <strong>"บันทึกแล้ว"</strong> ระบบจะปรับ <strong>Shop Ads Target / Banner Target</strong> ของวันนั้นให้เท่ากับยอดจ่ายจริงโดยอัตโนมัติ เพื่อรักษาความเป็นระเบียบและสอดคล้องกับงบจริงที่เกิดขึ้น</p>
-                  <p>• ระบบจำยอดแผนเดิม (Original Target) ไว้ในฐานข้อมูลเบื้องหลัง เพื่อใช้คำนวณ <strong>งบประหยัดสะสม (Roll-Over)</strong> ส่งผลให้ "เฉลี่ยงบที่เหลือ (แนะนำ)" ยังสามารถเกลี่ยเงินได้อย่างแม่นยำ 100% โดยไม่อิงตามตารางที่แปรผันไป</p>
-                </footer>
-
-              </div>
-
-              {/* ==========================================
-                  CUSTOM MODAL WINDOWS
-                 ========================================== */}
-
-              {/* Modal: Save as New Plan */}
-              {isSaveModalOpen && (
-                <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-xs flex items-center justify-center p-4 z-50 animate-fade-in">
-                  <div className="bg-white rounded-2xl max-w-md w-full border border-slate-200 p-6 shadow-xl space-y-4">
-                    <div className="flex justify-between items-center border-b border-slate-100 pb-2">
-                      <h3 className="font-black text-slate-900 text-sm">สร้างแผนงบประมาณใหม่</h3>
-                      <button onClick={() => setIsSaveModalOpen(false)} className="text-slate-400 hover:text-slate-600 transition">
-                        <IconX className="w-5 h-5" />
-                      </button>
-                    </div>
-                    <div className="space-y-2">
-                      <label className="text-xs text-slate-500 font-bold block">ระบุชื่อแผนงบประมาณใหม่ของคุณ</label>
-                      <input
-                        type="text"
-                        placeholder="เช่น แผนโฆษณาพฤษภาคม 5.5..."
-                        value={newPlanName}
-                        onChange={(e) => setNewPlanName(e.target.value)}
-                        className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs focus:ring-1 focus:ring-orange-500 focus:bg-white text-slate-800 font-medium"
-                      />
-                    </div>
-                    <div className="flex justify-end gap-2 text-xs font-bold pt-2">
-                      <button
-                        onClick={() => setIsSaveModalOpen(false)}
-                        className="px-4 py-2 border border-slate-200 text-slate-600 rounded-xl hover:bg-slate-50 transition"
-                      >
-                        ยกเลิก
-                      </button>
-                      <button
-                        onClick={handleSaveAsNewPlan}
-                        disabled={!newPlanName.trim()}
-                        className="px-4 py-2 bg-orange-600 text-white rounded-xl hover:bg-orange-700 disabled:opacity-50 transition"
-                      >
-                        บันทึกแผนใหม่
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* Modal: Rename Plan */}
-              {isRenameModalOpen && (
-                <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-xs flex items-center justify-center p-4 z-50">
-                  <div className="bg-white rounded-2xl max-w-md w-full border border-slate-200 p-6 shadow-xl space-y-4">
-                    <div className="flex justify-between items-center border-b border-slate-100 pb-2">
-                      <h3 className="font-black text-slate-900 text-sm">แก้ไขชื่อแผน</h3>
-                      <button onClick={() => setIsRenameModalOpen(false)} className="text-slate-400 hover:text-slate-600 transition">
-                        <IconX className="w-5 h-5" />
-                      </button>
-                    </div>
-                    <div className="space-y-2">
-                      <label className="text-xs text-slate-500 font-bold block">ชื่อแผนเดิม: <span className="font-semibold text-slate-800">{planToRename?.name}</span></label>
-                      <input
-                        type="text"
-                        placeholder="ระบุชื่อใหม่ที่นี่..."
-                        value={renameValue}
-                        onChange={(e) => setRenameValue(e.target.value)}
-                        className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs focus:ring-1 focus:ring-orange-500 focus:bg-white text-slate-800 font-medium"
-                      />
-                    </div>
-                    <div className="flex justify-end gap-2 text-xs font-bold pt-2">
-                      <button
-                        onClick={() => setIsRenameModalOpen(false)}
-                        className="px-4 py-2 border border-slate-200 text-slate-600 rounded-xl hover:bg-slate-50 transition"
-                      >
-                        ยกเลิก
-                      </button>
-                      <button
-                        onClick={handleSaveRename}
-                        disabled={!renameValue.trim()}
-                        className="px-4 py-2 bg-orange-600 text-white rounded-xl hover:bg-orange-700 disabled:opacity-50 transition"
-                      >
-                        ยืนยันการเปลี่ยนชื่อ
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* Modal: Delete Confirmation */}
-              {isDeleteModalOpen && (
-                <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-xs flex items-center justify-center p-4 z-50">
-                  <div className="bg-white rounded-2xl max-w-md w-full border border-slate-200 p-6 shadow-xl space-y-4">
-                    <div className="flex justify-between items-center border-b border-red-50 pb-2">
-                      <h3 className="font-black text-red-600 text-sm flex items-center gap-1">⚠️ ยืนยันการลบแผน</h3>
-                      <button onClick={() => setIsDeleteModalOpen(false)} className="text-slate-400 hover:text-slate-600 transition">
-                        <IconX className="w-5 h-5" />
-                      </button>
-                    </div>
-                    <p className="text-xs text-slate-600 leading-relaxed">
-                      คุณแน่ใจหรือไม่ที่จะลบแผนโฆษณา <strong className="text-slate-900">"{planToDelete?.name}"</strong>? <br />
-                      การลบนี้จะทำให้ข้อมูลแผนที่บันทึกไว้หายไปอย่างถาวรและไม่สามารถเรียกคืนได้
-                    </p>
-                    <div className="flex justify-end gap-2 text-xs font-bold pt-2">
-                      <button
-                        onClick={() => setIsDeleteModalOpen(false)}
-                        className="px-4 py-2 border border-slate-200 text-slate-600 rounded-xl hover:bg-slate-50 transition"
-                      >
-                        ยกเลิก
-                      </button>
-                      <button
-                        onClick={handleConfirmDelete}
-                        className="px-4 py-2 bg-red-600 text-white rounded-xl hover:bg-red-700 transition"
-                      >
-                        ใช่, ฉันต้องการลบแผนนี้
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* Modal: Reset Confirmation */}
-              {isResetConfirmOpen && (
-                <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-xs flex items-center justify-center p-4 z-50">
-                  <div className="bg-white rounded-2xl max-w-md w-full border border-slate-200 p-6 shadow-xl space-y-4">
-                    <div className="flex justify-between items-center border-b border-red-50 pb-2">
-                      <h3 className="font-black text-red-600 text-sm flex items-center gap-1">⚠️ ยืนยันการเคลียร์ข้อมูล</h3>
-                      <button onClick={() => setIsResetConfirmOpen(false)} className="text-slate-400 hover:text-slate-600 transition">
-                        <IconX className="w-5 h-5" />
-                      </button>
-                    </div>
-                    <p className="text-xs text-slate-600 leading-relaxed">
-                      คุณแน่ใจหรือไม่ที่จะล้างข้อมูล <strong className="text-slate-900">"ยอดใช้จริงทั้งหมด (Actual Spent)"</strong> และสลับสถานะทุกวันกลับไปเป็น "ค้างบันทึก"? <br />
-                      ระบบจะกู้คืนค่าเป้าหมายเดิม (Original Target) ของคุณให้ในทุกวันของเดือนนี้โดยอัตโนมัติ
-                    </p>
-                    <div className="flex justify-end gap-2 text-xs font-bold pt-2">
-                      <button
-                        onClick={() => setIsResetConfirmOpen(false)}
-                        className="px-4 py-2 border border-slate-200 text-slate-600 rounded-xl hover:bg-slate-50 transition"
-                      >
-                        ยกเลิก
-                      </button>
-                      <button
-                        onClick={confirmResetActuals}
-                        className="px-4 py-2 bg-red-600 text-white rounded-xl hover:bg-red-700 transition"
-                      >
-                        ใช่, ล้างข้อมูลจริงทั้งหมด
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-            </div>
-          );
+        // โหลดข้อมูลเก่าจาก localStorage หากมี
+        const savedState = localStorage.getItem('shopee_ads_smart_state');
+        if (savedState) {
+          try {
+            state = JSON.parse(savedState);
+          } catch(e) {
+            console.error("Failed to load saved state", e);
+          }
         }
 
-        const root = ReactDOM.createRoot(document.getElementById('root'));
-        root.render(<App />);
+        // โหลด Presets จากฟังก์ชันหลักเพื่อเติมให้ฟอร์มด้านบน
+        function syncPresetFormInputs() {
+          const keys = Object.keys(state.presets);
+          keys.forEach(key => {
+            const input = document.getElementById(`preset-${key}`);
+            if (input) input.value = state.presets[key];
+          });
+        }
+
+        function updatePresetState(key, value) {
+          state.presets[key] = parseInt(value, 10) || 0;
+          saveStateToStorage();
+        }
+
+        // เซฟข้อมูล และออโต้ซิงค์ทุกวันกับแผนที่เลือก
+        function saveStateToStorage() {
+          state.plans = state.plans.map(p => {
+            if (p.id === state.selectedPlanId) {
+              return {
+                ...p,
+                month: state.selectedMonth,
+                presets: { ...state.presets },
+                days: JSON.parse(JSON.stringify(state.days))
+              };
+            }
+            return p;
+          });
+          localStorage.setItem('shopee_ads_smart_state', JSON.stringify(state));
+        }
+
+        // ฟังก์ชันคำนวณวันทั้งหมดในเดือนที่เลือก
+        function getDaysCountInMonth(month) {
+          const daysInMonths = { '02': 28, '04': 30, '06': 30, '09': 30, '11': 30 };
+          return daysInMonths[month] || 31;
+        }
+
+        // ระบบเปลี่ยนสถานะเดือน
+        function changeMonth(month) {
+          state.selectedMonth = month;
+          const count = getDaysCountInMonth(month);
+          
+          if (state.days.length < count) {
+            const added = Array.from({ length: count - state.days.length }, (_, i) => {
+              const dayNum = state.days.length + i + 1;
+              const initialShop = state.presets.normalShop;
+              const initialBanner = state.presets.normalBanner;
+              return {
+                date: dayNum,
+                type: getDayTypeByRule(dayNum, month),
+                shopTarget: initialShop,
+                originalShopTarget: initialShop,
+                shopActual: 0,
+                bannerTarget: initialBanner,
+                originalBannerTarget: initialBanner,
+                bannerActual: 0,
+                isCompleted: false
+              };
+            });
+            state.days = [...state.days, ...added];
+          } else {
+            state.days = state.days.slice(0, count);
+          }
+          
+          saveStateToStorage();
+          initTableHTML();
+          recalculate();
+        }
+
+        function getDayTypeByRule(day, month) {
+          const doubleDigit = parseInt(month, 10);
+          if (day === doubleDigit) return 'D-Day';
+          if (day >= 24 && day <= 26) return 'Payday';
+          if (day === 15) return 'MidMonth';
+          return 'Normal';
+        }
+
+        // ดึงข้อมูล Row ใหม่ทั้งหมดและจัดรูปแบบ
+        function initTableHTML() {
+          const tbody = document.getElementById('table-body');
+          tbody.innerHTML = '';
+          
+          state.days.forEach(day => {
+            const row = document.createElement('tr');
+            row.id = `row-${day.date}`;
+            
+            let rowBgClass = "hover:bg-slate-50/50";
+            if (day.type === 'D-Day') rowBgClass = "bg-rose-50/10 hover:bg-rose-50/20";
+            else if (day.type === 'Payday') rowBgClass = "bg-purple-50/10 hover:bg-purple-50/20";
+            else if (day.type === 'MidMonth') rowBgClass = "bg-amber-50/10 hover:bg-amber-50/20";
+            
+            row.className = `${rowBgClass} transition duration-150`;
+            
+            row.innerHTML = `
+                <!-- Date -->
+                <td class="py-2.5 px-3 text-center font-bold text-slate-700 text-xs">${day.date}</td>
+                
+                <!-- Campaign Type Selector -->
+                <td class="py-2.5 px-3">
+                    <select
+                        id="selectType-${day.date}"
+                        onchange="updateRowType(${day.date}, this.value)"
+                        ${day.isCompleted ? 'disabled' : ''}
+                        class="w-full text-[11px] p-1 rounded-lg font-bold border-slate-200 border cursor-pointer focus:ring-1 focus:ring-orange-500 focus:border-orange-500 disabled:opacity-75 ${
+                          day.type === 'D-Day' ? 'bg-rose-50 text-rose-700 border-rose-150' :
+                          day.type === 'Payday' ? 'bg-purple-50 text-purple-700 border-purple-150' :
+                          day.type === 'MidMonth' ? 'bg-amber-50 text-amber-700 border-amber-150' :
+                          'bg-slate-50 text-slate-600'
+                        }"
+                    >
+                        <option value="Normal" ${day.type === 'Normal' ? 'selected' : ''}>Normal Day</option>
+                        <option value="D-Day" ${day.type === 'D-Day' ? 'selected' : ''}>🔥 D-Day (คู่)</option>
+                        <option value="MidMonth" ${day.type === 'MidMonth' ? 'selected' : ''}>⭐ Mid-Month</option>
+                        <option value="Payday" ${day.type === 'Payday' ? 'selected' : ''}>💰 Payday</option>
+                    </select>
+                </td>
+
+                <!-- Shop Ads Target -->
+                <td class="py-1.5 px-2 bg-blue-50/10">
+                    <input
+                        type="number"
+                        id="shopTarget-${day.date}"
+                        value="${day.shopTarget}"
+                        oninput="handleCellChange(${day.date}, 'shopTarget', this.value)"
+                        ${day.isCompleted ? 'disabled' : ''}
+                        class="w-full bg-white border border-slate-200 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 rounded-lg px-2 py-0.5 text-right text-slate-800 font-semibold disabled:bg-slate-50 disabled:text-slate-500"
+                    />
+                    <div id="shopOrig-${day.date}" class="text-[10px] text-slate-400 text-right mt-0.5 pr-1 font-medium hidden"></div>
+                </td>
+
+                <!-- Shop Ads Actual Spent -->
+                <td class="py-1.5 px-2 bg-orange-50/10">
+                    <input
+                        type="number"
+                        id="shopActual-${day.date}"
+                        value="${day.shopActual === 0 ? '' : day.shopActual}"
+                        placeholder="0"
+                        oninput="handleCellChange(${day.date}, 'shopActual', this.value)"
+                        class="w-full bg-white border border-slate-300 focus:border-orange-500 focus:ring-1 focus:ring-orange-500 rounded-lg px-2 py-0.5 text-right text-orange-600 font-extrabold"
+                    />
+                </td>
+
+                <!-- Banner Target -->
+                <td class="py-1.5 px-2 bg-blue-50/10">
+                    <input
+                        type="number"
+                        id="bannerTarget-${day.date}"
+                        value="${day.bannerTarget}"
+                        oninput="handleCellChange(${day.date}, 'bannerTarget', this.value)"
+                        ${day.isCompleted ? 'disabled' : ''}
+                        class="w-full bg-white border border-slate-200 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 rounded-lg px-2 py-0.5 text-right text-slate-800 font-semibold disabled:bg-slate-50 disabled:text-slate-500"
+                    />
+                    <div id="bannerOrig-${day.date}" class="text-[10px] text-slate-400 text-right mt-0.5 pr-1 font-medium hidden"></div>
+                </td>
+
+                <!-- Banner Actual Spent -->
+                <td class="py-1.5 px-2 bg-orange-50/10">
+                    <input
+                        type="number"
+                        id="bannerActual-${day.date}"
+                        value="${day.bannerActual === 0 ? '' : day.bannerActual}"
+                        placeholder="0"
+                        oninput="handleCellChange(${day.date}, 'bannerActual', this.value)"
+                        class="w-full bg-white border border-slate-300 focus:border-orange-500 focus:ring-1 focus:ring-orange-500 rounded-lg px-2 py-0.5 text-right text-orange-600 font-extrabold"
+                    />
+                </td>
+
+                <!-- Total Target (Planned) -->
+                <td id="totalPlanned-${day.date}" class="py-2.5 px-3 text-right font-semibold text-slate-700 border-l border-slate-150 bg-slate-50/30">฿0</td>
+
+                <!-- Total Actual -->
+                <td id="totalActual-${day.date}" class="py-2.5 px-3 text-right font-bold text-slate-900 bg-slate-50/30">฿0</td>
+
+                <!-- Variance column -->
+                <td id="variance-${day.date}" class="py-2.5 px-3 text-right bg-slate-50/30 font-medium">--</td>
+
+                <!-- Status Button Toggle -->
+                <td class="py-2.5 px-3 text-center">
+                    <button
+                        id="statusBtn-${day.date}"
+                        onclick="toggleRowStatus(${day.date})"
+                        class="px-3 py-1 rounded-full text-[10px] font-bold tracking-wide transition-all"
+                    >
+                        ค้างบันทึก
+                    </button>
+                </td>
+            `;
+            tbody.appendChild(row);
+            updateRowUI(day.date);
+          });
+        }
+
+        // อัปเดตข้อมูลของแต่ละแถวในตารางโดยไม่รีสตาร์ท UI โฟกัส
+        function updateRowUI(date) {
+          const day = state.days.find(d => d.date === date);
+          if (!day) return;
+
+          const shopTargetInput = document.getElementById(`shopTarget-${date}`);
+          const shopActualInput = document.getElementById(`shopActual-${date}`);
+          const bannerTargetInput = document.getElementById(`bannerTarget-${date}`);
+          const bannerActualInput = document.getElementById(`bannerActual-${date}`);
+          const statusBtn = document.getElementById(`statusBtn-${date}`);
+          const selectType = document.getElementById(`selectType-${date}`);
+          
+          if (!shopTargetInput) return;
+
+          // จัดสถานะ Disabled
+          shopTargetInput.disabled = day.isCompleted;
+          bannerTargetInput.disabled = day.isCompleted;
+          selectType.disabled = day.isCompleted;
+
+          // อัปเดต Value จริง
+          shopTargetInput.value = day.shopTarget;
+          shopActualInput.value = day.shopActual === 0 ? '' : day.shopActual;
+          bannerTargetInput.value = day.bannerTarget;
+          bannerActualInput.value = day.bannerActual === 0 ? '' : day.bannerActual;
+
+          // แสดงแผนงบเดิมใต้กล่องป้อน
+          const shopOrigDiv = document.getElementById(`shopOrig-${date}`);
+          if (day.isCompleted && day.shopTarget !== day.originalShopTarget) {
+            shopOrigDiv.innerHTML = `แผนเดิม: ฿${day.originalShopTarget.toLocaleString()}`;
+            shopOrigDiv.classList.remove('hidden');
+          } else {
+            shopOrigDiv.classList.add('hidden');
+          }
+
+          const bannerOrigDiv = document.getElementById(`bannerOrig-${date}`);
+          if (day.isCompleted && day.bannerTarget !== day.originalBannerTarget) {
+            bannerOrigDiv.innerHTML = `แผนเดิม: ฿${day.originalBannerTarget.toLocaleString()}`;
+            bannerOrigDiv.classList.remove('hidden');
+          } else {
+            bannerOrigDiv.classList.add('hidden');
+          }
+
+          // ปรับปรุงธีมปุ่มสถานะ
+          if (day.isCompleted) {
+            statusBtn.className = "px-3 py-1 rounded-full text-[10px] font-bold tracking-wide transition-all bg-emerald-100 text-emerald-800 hover:bg-emerald-200";
+            statusBtn.innerHTML = "✓ บันทึกแล้ว";
+          } else {
+            statusBtn.className = "px-3 py-1 rounded-full text-[10px] font-bold tracking-wide transition-all bg-slate-100 text-slate-400 hover:text-slate-600 hover:bg-slate-200";
+            statusBtn.innerHTML = "ค้างบันทึก";
+          }
+        }
+
+        // อัปเดตประเภทวันเดี่ยว
+        function updateRowType(date, type) {
+          const day = state.days.find(d => d.date === date);
+          if (day) {
+            day.type = type;
+            saveStateToStorage();
+            initTableHTML(); // รีเฟรชสีพื้นหลังแถว
+            recalculate();
+          }
+        }
+
+        // ควบคุมเหตุการณ์กรอกตัวเลข
+        function handleCellChange(date, field, value) {
+          const numericValue = value === '' ? 0 : Math.max(0, parseInt(value, 10) || 0);
+          const day = state.days.find(d => d.date === date);
+          if (!day) return;
+
+          day[field] = numericValue;
+          
+          if (field === 'shopTarget') {
+            day.originalShopTarget = numericValue;
+          }
+          if (field === 'bannerTarget') {
+            day.originalBannerTarget = numericValue;
+          }
+
+          // ตรวจสอบและเกลี่ยงบอัตโนมัติเมื่อป้อน Actual Spent
+          if (field === 'shopActual' || field === 'bannerActual') {
+            const hasActualSpent = (day.shopActual > 0 || day.bannerActual > 0 || (field === 'shopActual' && value !== '') || (field === 'bannerActual' && value !== ''));
+            day.isCompleted = hasActualSpent;
+            
+            if (day.isCompleted) {
+              // ซิงค์เป้าหมาย Target ให้เท่ากับยอดใช้จริง แม้ค่าจะเป็น 0 (ตรงตามที่ลูกค้าระบุ)
+              day.shopTarget = day.shopActual;
+              day.bannerTarget = day.bannerActual;
+            } else {
+              day.shopTarget = day.originalShopTarget;
+              day.bannerTarget = day.originalBannerTarget;
+            }
+          }
+
+          updateRowUI(date);
+          saveStateToStorage();
+          recalculate();
+        }
+
+        // เปลี่ยนสถานะบันทึกผลทางปุ่มสถานะ
+        function toggleRowStatus(date) {
+          const day = state.days.find(d => d.date === date);
+          if (!day) return;
+
+          day.isCompleted = !day.isCompleted;
+          if (day.isCompleted) {
+            day.shopTarget = day.shopActual;
+            day.bannerTarget = day.bannerActual;
+          } else {
+            day.shopTarget = day.originalShopTarget;
+            day.bannerTarget = day.originalBannerTarget;
+          }
+
+          updateRowUI(date);
+          saveStateToStorage();
+          recalculate();
+        }
+
+        // ระบบแจกจ่ายงบด่วน (Smart Preset Allocator)
+        function applyPresetToSelectedTypes(type) {
+          state.days.forEach(day => {
+            if (day.type === type && !day.isCompleted) {
+              let shopTarget = day.shopTarget;
+              let bannerTarget = day.bannerTarget;
+              
+              if (type === 'D-Day') {
+                shopTarget = state.presets.ddayShop;
+                bannerTarget = state.presets.ddayBanner;
+              } else if (type === 'MidMonth') {
+                shopTarget = state.presets.midMonthShop;
+                bannerTarget = state.presets.midMonthBanner;
+              } else if (type === 'Payday') {
+                shopTarget = state.presets.paydayShop;
+                bannerTarget = state.presets.paydayBanner;
+              } else {
+                shopTarget = state.presets.normalShop;
+                bannerTarget = state.presets.normalBanner;
+              }
+
+              day.shopTarget = shopTarget;
+              day.originalShopTarget = shopTarget;
+              day.bannerTarget = bannerTarget;
+              day.originalBannerTarget = bannerTarget;
+            }
+          });
+          saveStateToStorage();
+          initTableHTML();
+          recalculate();
+        }
+
+        function applyAllPresets() {
+          state.days.forEach(day => {
+            if (!day.isCompleted) {
+              let shopTarget = state.presets.normalShop;
+              let bannerTarget = state.presets.normalBanner;
+              
+              if (day.type === 'D-Day') {
+                shopTarget = state.presets.ddayShop;
+                bannerTarget = state.presets.ddayBanner;
+              } else if (day.type === 'MidMonth') {
+                shopTarget = state.presets.midMonthShop;
+                bannerTarget = state.presets.midMonthBanner;
+              } else if (day.type === 'Payday') {
+                shopTarget = state.presets.paydayShop;
+                bannerTarget = state.presets.paydayBanner;
+              }
+
+              day.shopTarget = shopTarget;
+              day.originalShopTarget = shopTarget;
+              day.bannerTarget = bannerTarget;
+              day.originalBannerTarget = bannerTarget;
+            }
+          });
+          saveStateToStorage();
+          initTableHTML();
+          recalculate();
+        }
+
+        // ระบบคำนวณและอัปเดต Dashboard
+        function recalculate() {
+          let totalShopTarget = 0;
+          let totalShopActual = 0;
+          let totalBannerTarget = 0;
+          let totalBannerActual = 0;
+          let completedDaysCount = 0;
+          const count = getDaysCountInMonth(state.selectedMonth);
+
+          state.days.forEach(day => {
+            totalShopTarget += day.shopTarget;
+            totalBannerTarget += day.bannerTarget;
+            
+            // สรุปยอดผลรวมแถว
+            const dayTotalTarget = day.shopTarget + day.bannerTarget;
+            const dayTotalActual = day.shopActual + day.bannerActual;
+            
+            document.getElementById(`totalPlanned-${day.date}`).innerHTML = `฿${dayTotalTarget.toLocaleString()}`;
+            document.getElementById(`totalActual-${day.date}`).innerHTML = day.isCompleted ? `฿${dayTotalActual.toLocaleString()}` : '฿0';
+            
+            const originalDayTotalTarget = day.originalShopTarget + day.originalBannerTarget;
+            const variance = day.isCompleted ? (dayTotalActual - originalDayTotalTarget) : 0;
+            const varianceCell = document.getElementById(`variance-${day.date}`);
+            
+            if (day.isCompleted) {
+              totalShopActual += day.shopActual;
+              totalBannerActual += day.bannerActual;
+              completedDaysCount++;
+              
+              if (variance === 0) {
+                varianceCell.innerHTML = `<span class="text-slate-400 font-medium">สอดคล้องเป้า</span>`;
+              } else if (variance < 0) {
+                varianceCell.innerHTML = `<span class="text-emerald-600 font-bold">-${Math.abs(variance).toLocaleString()} (ประหยัดแอด)</span>`;
+              } else {
+                varianceCell.innerHTML = `<span class="text-rose-600 font-bold">+${variance.toLocaleString()} (แอดล้นแผน)</span>`;
+              }
+            } else {
+              varianceCell.innerHTML = `<span class="text-slate-400 font-light">-</span>`;
+            }
+          });
+
+          // ตัวแปรส่วนรวม
+          const totalTarget = totalShopTarget + totalBannerTarget;
+          const totalActual = totalShopActual + totalBannerActual;
+          const spentPercent = totalTarget > 0 ? (totalActual / totalTarget) * 100 : 0;
+          const remainingBudget = Math.max(0, totalTarget - totalActual);
+          const remainingDaysCount = count - completedDaysCount;
+
+          let cumulativeOriginalPlannedSoFar = 0;
+          state.days.forEach(day => {
+            if (day.isCompleted) {
+              cumulativeOriginalPlannedSoFar += (day.originalShopTarget + day.originalBannerTarget);
+            }
+          });
+
+          const pacingGap = cumulativeOriginalPlannedSoFar - totalActual;
+          const recommendedDailySpend = remainingDaysCount > 0 ? remainingBudget / remainingDaysCount : 0;
+
+          // อัปเดตตัวเลขการคำนวณบน Dashboard Card
+          document.getElementById('calc-total-target').innerHTML = `฿${totalTarget.toLocaleString()}`;
+          document.getElementById('calc-shop-target-sub').innerHTML = `Shop: ฿${totalShopTarget.toLocaleString()}`;
+          document.getElementById('calc-banner-target-sub').innerHTML = `Banner: ฿${totalBannerTarget.toLocaleString()}`;
+          
+          document.getElementById('calc-total-actual').innerHTML = `฿${totalActual.toLocaleString()}`;
+          document.getElementById('calc-spent-percent').innerHTML = `${spentPercent.toFixed(1)}%`;
+          document.getElementById('calc-spent-progress').style.width = `${Math.min(100, spentPercent)}%`;
+          
+          document.getElementById('calc-remaining-budget').innerHTML = `฿${remainingBudget.toLocaleString()}`;
+          document.getElementById('calc-completed-days').innerHTML = `บันทึกแล้ว ${completedDaysCount} จาก ${count} วัน`;
+
+          // งบประหยัดสะสม (Roll-Over)
+          const pacingGapEl = document.getElementById('calc-pacing-gap');
+          const pacingDescEl = document.getElementById('calc-pacing-gap-desc');
+          pacingGapEl.innerHTML = `${pacingGap >= 0 ? '+' : ''}฿${pacingGap.toLocaleString()}`;
+          if (pacingGap >= 0) {
+            pacingGapEl.className = "text-xl font-extrabold text-purple-600";
+            pacingDescEl.innerHTML = `
+                <svg class="w-2.5 h-2.5 text-purple-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
+                <span>ใช้น้อยกว่าเป้า เกลี่ยไปวันอื่น</span>`;
+          } else {
+            pacingGapEl.className = "text-xl font-extrabold text-rose-600";
+            pacingDescEl.innerHTML = `
+                <svg class="w-2.5 h-2.5 text-rose-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
+                <span>ใช้เงินจริงแอดล้นแผน</span>`;
+          }
+
+          // เฉลี่ยงบรายวันที่เหลือ (แนะนำ)
+          document.getElementById('calc-recommended-spend').innerHTML = `฿${Math.round(recommendedDailySpend).toLocaleString()} <span class="text-[10px] font-normal text-slate-500">/ วัน</span>`;
+          document.getElementById('calc-remaining-days').innerHTML = `เฉลี่ยโควตาสำหรับ ${remainingDaysCount} วันที่เหลือ`;
+
+          // อัปเดตส่วนท้ายสุดตาราง (Footer Summary)
+          document.getElementById('foot-shop-target').innerHTML = `฿${totalShopTarget.toLocaleString()}`;
+          document.getElementById('foot-shop-actual').innerHTML = `฿${totalShopActual.toLocaleString()}`;
+          document.getElementById('foot-banner-target').innerHTML = `฿${totalBannerTarget.toLocaleString()}`;
+          document.getElementById('foot-banner-actual').innerHTML = `฿${totalBannerActual.toLocaleString()}`;
+          document.getElementById('foot-total-target').innerHTML = `฿${totalTarget.toLocaleString()}`;
+          document.getElementById('foot-total-actual').innerHTML = `฿${totalActual.toLocaleString()}`;
+          
+          if (pacingGap >= 0) {
+            document.getElementById('foot-variance').innerHTML = `<span class="text-purple-700">งบส่วนต่างบวก: ฿${pacingGap.toLocaleString()}</span>`;
+          } else {
+            document.getElementById('foot-variance').innerHTML = `<span class="text-rose-700">งบส่วนต่างลบ: ฿${Math.abs(pacingGap).toLocaleString()}</span>`;
+          }
+        }
+
+        // ==========================================
+        // ระบบจัดการเซฟแคมเปญ / แผน (Plan System)
+        // ==========================================
+        let planIdToDelete = null;
+        let planIdToRename = null;
+
+        function renderPlanChips() {
+          const container = document.getElementById('plans-container');
+          container.innerHTML = '';
+          
+          state.plans.forEach(plan => {
+            const isActive = plan.id === state.selectedPlanId;
+            const chip = document.createElement('div');
+            chip.className = `group relative pl-3 pr-2 py-1.5 rounded-xl border transition-all duration-150 flex items-center gap-2 text-xs ${
+              isActive 
+                ? 'bg-orange-100 border-orange-400 ring-1 ring-orange-500/20 font-bold text-orange-950 shadow-sm' 
+                : 'bg-slate-50 border-slate-200 hover:bg-slate-100 text-slate-600'
+            }`;
+            
+            chip.innerHTML = `
+              <button onclick="loadPlan('${plan.id}')" class="truncate max-w-[160px] text-left font-semibold" title="${plan.name}">
+                ${isActive ? '➔ ' : ''}${plan.name}
+              </button>
+              <div class="flex items-center gap-0.5 opacity-65 group-hover:opacity-100 transition-opacity">
+                <button onclick="openRenameModal('${plan.id}')" class="p-0.5 hover:text-slate-950 rounded hover:bg-slate-200/60" title="แก้ไขชื่อแผน">
+                  <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
+                </button>
+                <button onclick="openDeleteModal('${plan.id}')" class="p-0.5 hover:text-red-600 rounded hover:bg-red-50" title="ลบแผนนี้">
+                  <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                </button>
+              </div>
+            `;
+            container.appendChild(chip);
+          });
+        }
+
+        function loadPlan(planId) {
+          const selectedPlan = state.plans.find(p => p.id === planId);
+          if (selectedPlan) {
+            state.selectedPlanId = planId;
+            state.selectedMonth = selectedPlan.month;
+            state.presets = { ...selectedPlan.presets };
+            state.days = JSON.parse(JSON.stringify(selectedPlan.days));
+            
+            document.getElementById('month-selector').value = selectedPlan.month;
+            
+            saveStateToStorage();
+            syncPresetFormInputs();
+            initTableHTML();
+            renderPlanChips();
+            recalculate();
+          }
+        }
+
+        function quickSaveCurrentPlan() {
+          state.plans = state.plans.map(p => {
+            if (p.id === state.selectedPlanId) {
+              return {
+                ...p,
+                month: state.selectedMonth,
+                presets: { ...state.presets },
+                days: JSON.parse(JSON.stringify(state.days))
+              };
+            }
+            return p;
+          });
+          saveStateToStorage();
+          renderPlanChips();
+        }
+
+        // เซฟปัจจุบันแบบมีอนิเมชันให้ผู้ใช้เห็นสถานะความสำเร็จ
+        function triggerManualSave() {
+          quickSaveCurrentPlan();
+          
+          const btn = document.getElementById('btn-quick-save');
+          const text = document.getElementById('text-quick-save');
+          
+          // เปลี่ยนสไตล์ปุ่มเป็นสีเขียวแจ้งความสำเร็จ
+          btn.className = "px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-[11px] font-bold transition duration-150 flex items-center gap-1 shadow-sm";
+          text.innerText = "บันทึกสำเร็จ! ✓";
+          
+          // คืนค่าปุ่มเดิมภายใน 1.5 วินาที
+          setTimeout(() => {
+            btn.className = "px-3 py-1.5 border border-emerald-200 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 rounded-xl text-[11px] font-bold transition duration-150 flex items-center gap-1 shadow-sm";
+            text.innerText = "บันทึกปัจจุบัน";
+          }, 1500);
+        }
+
+        // ==========================================
+        // ระบบป๊อปอัปควบคุม Modals
+        // ==========================================
+        function openModal(type) {
+          document.getElementById(`modal-${type}`).classList.remove('hidden');
+        }
+
+        function closeModal(type) {
+          document.getElementById(`modal-${type}`).classList.add('hidden');
+        }
+
+        // โหมดบันทึกแผนใหม่
+        function openSavePlanModal() {
+          document.getElementById('input-new-plan-name').value = '';
+          openModal('save');
+        }
+
+        function saveAsNewPlan() {
+          const nameInput = document.getElementById('input-new-plan-name').value;
+          if (!nameInput.trim()) return;
+
+          const newId = 'plan-' + Date.now();
+          const newPlan = {
+            id: newId,
+            name: nameInput.trim(),
+            month: state.selectedMonth,
+            presets: { ...state.presets },
+            days: JSON.parse(JSON.stringify(state.days))
+          };
+
+          state.plans.push(newPlan);
+          state.selectedPlanId = newId;
+          saveStateToStorage();
+          renderPlanChips();
+          closeModal('save');
+        }
+
+        // โหมดแก้ชื่อของแผนปัจจุบัน
+        function openRenameModalOfActive() {
+          openRenameModal(state.selectedPlanId);
+        }
+
+        // โหมดแก้ชื่อแผนงาน
+        function openRenameModal(planId) {
+          planIdToRename = planId;
+          const targetPlan = state.plans.find(p => p.id === planId);
+          if (targetPlan) {
+            document.getElementById('input-rename-name').value = targetPlan.name;
+            openModal('rename');
+          }
+        }
+
+        function confirmRenamePlan() {
+          const newName = document.getElementById('input-rename-name').value;
+          if (!newName.trim() || !planIdToRename) return;
+
+          state.plans = state.plans.map(p => {
+            if (p.id === planIdToRename) {
+              return { ...p, name: newName.trim() };
+            }
+            return p;
+          });
+
+          saveStateToStorage();
+          renderPlanChips();
+          closeModal('rename');
+          planIdToRename = null;
+        }
+
+        // โหมดลบแผนปัจจุบัน
+        function openDeleteModalOfActive() {
+          openDeleteModal(state.selectedPlanId);
+        }
+
+        // โหมดลบแผนงาน
+        function openDeleteModal(planId) {
+          planIdToDelete = planId;
+          openModal('delete');
+        }
+
+        function confirmDeletePlan() {
+          if (!planIdToDelete) return;
+          state.plans = state.plans.filter(p => p.id !== planIdToDelete);
+
+          if (state.selectedPlanId === planIdToDelete && state.plans.length > 0) {
+            loadPlan(state.plans[0].id);
+          } else if (state.plans.length === 0) {
+            // สร้างแผนจำลองขึ้นใหม่หากลบหมด เพื่อป้องกันระบบค้าง
+            const freshId = 'plan-' + Date.now();
+            const freshPlan = {
+              id: freshId,
+              name: 'แผนหลัก มีนาคม (3.3 Campaign)',
+              month: '03',
+              presets: { ...DEFAULT_PRESETS },
+              days: JSON.parse(JSON.stringify(INITIAL_DAYS_DATA))
+            };
+            state.plans = [freshPlan];
+            loadPlan(freshId);
+          } else {
+            // ซิงค์สเตทปัจจุบันเมื่อทำการลบแบรนช์ข้างเคียง
+            loadPlan(state.selectedPlanId);
+          }
+
+          saveStateToStorage();
+          renderPlanChips();
+          closeModal('delete');
+          planIdToDelete = null;
+        }
+
+        // โหมดรีเซ็ตยอดใช้จริง
+        function openResetConfirmModal() {
+          openModal('reset');
+        }
+
+        function confirmResetActuals() {
+          state.days.forEach(day => {
+            day.shopActual = 0;
+            day.bannerActual = 0;
+            day.shopTarget = day.originalShopTarget;
+            day.bannerTarget = day.originalBannerTarget;
+            day.isCompleted = false;
+          });
+
+          saveStateToStorage();
+          initTableHTML();
+          recalculate();
+          closeModal('reset');
+        }
+
+        // เริ่มตั้งค่าแอปพลิเคชันเมื่อโหลด DOM สำเร็จ
+        window.addEventListener('DOMContentLoaded', () => {
+          document.getElementById('month-selector').value = state.selectedMonth;
+          syncPresetFormInputs();
+          initTableHTML();
+          renderPlanChips();
+          recalculate();
+        });
     </script>
 </body>
 </html>
