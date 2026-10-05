@@ -1,753 +1,1473 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
-  <title>Shopee Ad Budget Tracker — ง่าย & แก้ไขได้อิสระ</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <style>
-    :root { --primary: #ee4d2d; }
-    body { font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; }
-    .input-num { -moz-appearance: textfield; }
-    .input-num::-webkit-outer-spin-button,
-    .input-num::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
-    .card { @apply bg-white rounded-2xl border border-slate-200 shadow-sm; }
-    .btn { @apply px-3 py-1.5 rounded-xl text-sm font-semibold transition active:scale-95; }
-    .btn-primary { @apply bg-orange-500 hover:bg-orange-600 text-white; }
-    .btn-ghost { @apply bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-200; }
-    .btn-danger { @apply bg-red-50 hover:bg-red-100 text-red-600 border border-red-200; }
-    .btn-success { @apply bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200; }
-    table th { position: sticky; top: 0; z-index: 10; }
-    .editable:focus { outline: 2px solid #fb923c; outline-offset: -1px; background: #fff7ed; }
-    .day-type-chip { @apply px-2 py-0.5 rounded-lg text-xs font-medium border; }
-    @media (max-width: 768px) {
-      .table-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shopee Ads Smart Budgeting Dashboard</title>
+    
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Sarabun:ital,wght@0,300;0,400;0,600;0,700;0,800;1,400&display=swap');
+        body {
+            font-family: 'Sarabun', sans-serif;
+        }
+        /* ซ่อนปุ่มลูกศรของช่องป้อนตัวเลข */
+        input::-webkit-outer-spin-button,
+        input::-webkit-inner-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+        input[type=number] {
+            -moz-appearance: textfield;
+        }
+    </style>
 </head>
-<body class="bg-slate-50 text-slate-800 min-h-screen">
-  <!-- Header -->
-  <header class="bg-white border-b border-slate-200 sticky top-0 z-40">
-    <div class="max-w-7xl mx-auto px-3 py-3 flex flex-wrap items-center justify-between gap-3">
-      <div class="flex items-center gap-2">
-        <span class="bg-orange-500 text-white text-xs font-bold px-2 py-1 rounded">SHOPEE</span>
-        <div>
-          <h1 class="font-bold text-base leading-tight">Ad Budget Tracker</h1>
-          <p class="text-[11px] text-slate-400">ง่าย • แก้ไขได้อิสระ • Auto-save</p>
+<body class="bg-slate-50 text-slate-800 antialiased">
+
+    <div class="min-h-screen p-4 md:p-6">
+        <div class="max-w-7xl mx-auto space-y-4">
+            
+            <!-- Header Block -->
+            <header class="flex flex-col md:flex-row justify-between items-start md:items-center bg-white border border-slate-200 rounded-2xl p-5 shadow-sm gap-4">
+                <div class="space-y-1">
+                    <div class="flex items-center gap-2">
+                        <span class="p-1.5 bg-orange-600 rounded-lg text-white font-black text-xs tracking-wider">SHOPEE</span>
+                        <h1 class="text-xl font-extrabold text-slate-900 tracking-tight">Smart Budget Planner</h1>
+                    </div>
+                    <p class="text-slate-500 text-xs">เครื่องมือจัดสรรงบแอดรายวัน สำหรับกระตุ้นยอดขายพร้อมระบบเกลี่ยเงินอัตโนมัติ</p>
+                </div>
+                
+                <div class="flex flex-wrap items-center gap-3 w-full md:w-auto">
+                    <!-- Month selector -->
+                    <div class="bg-slate-100 p-1.5 rounded-xl flex items-center border border-slate-200 text-xs">
+                        <span class="px-2 text-slate-500 font-medium">เลือกเดือน:</span>
+                        <select 
+                            id="month-selector" 
+                            onchange="changeMonth(this.value)"
+                            class="bg-white border border-slate-200 text-orange-600 font-bold focus:ring-1 focus:ring-orange-500 rounded-lg cursor-pointer py-1 px-2"
+                        >
+                            <option value="01">มกราคม (1.1)</option>
+                            <option value="02">กุมภาพันธ์ (2.2)</option>
+                            <option value="03" selected>มีนาคม (3.3)</option>
+                            <option value="04">เมษายน (4.4)</option>
+                            <option value="05">พฤษภาคม (5.5)</option>
+                            <option value="06">มิถุนายน (6.6)</option>
+                            <option value="07">กรกฎาคม (7.7)</option>
+                            <option value="08">สิงหาคม (8.8)</option>
+                            <option value="09">กันยายน (9.9)</option>
+                            <option value="10">ตุลาคม (10.10)</option>
+                            <option value="11">พฤศจิกายน (11.11)</option>
+                            <option value="12">ธันวาคม (12.12)</option>
+                        </select>
+                    </div>
+                    
+                    <!-- Reset button -->
+                    <button 
+                        onclick="openResetConfirmModal()"
+                        class="px-3 py-1.5 text-xs bg-white hover:bg-red-50 border border-slate-200 text-red-600 hover:border-red-300 transition duration-150 rounded-xl flex items-center gap-2 font-semibold shadow-sm ml-auto md:ml-0"
+                    >
+                        <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 1121.21 11H18M9 7h1v10H9m4-10h1v10h-1" />
+                        </svg>
+                        ล้างยอดใช้จริง
+                    </button>
+                </div>
+            </header>
+
+            <!-- Compact Save Plans Section -->
+            <section class="bg-white border border-slate-200 rounded-2xl p-4 shadow-sm flex flex-col gap-3">
+                <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-3 pb-3 border-b border-slate-100">
+                    <div class="flex items-center gap-2 min-w-[180px]">
+                        <div class="p-1.5 bg-indigo-50 text-indigo-600 rounded-lg">
+                            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                            </svg>
+                        </div>
+                        <div>
+                            <h3 class="font-bold text-slate-800 text-xs">จัดการแผนงบประมาณโฆษณา</h3>
+                            <p class="text-[10px] text-slate-400">สร้าง เปลี่ยนชื่อ ลบ หรือสลับแผนงานได้ที่นี่</p>
+                        </div>
+                    </div>
+
+                    <div class="flex flex-wrap items-center gap-2 justify-start lg:justify-end">
+                        <span class="text-[10px] text-slate-400 font-bold uppercase mr-1">แผนปัจจุบัน:</span>
+                        
+                        <!-- บันทึกปัจจุบัน -->
+                        <button
+                            id="btn-quick-save"
+                            onclick="triggerManualSave()"
+                            class="px-3 py-1.5 border border-emerald-200 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 rounded-xl text-[11px] font-bold transition duration-150 flex items-center gap-1 shadow-sm"
+                        >
+                            <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" />
+                            </svg>
+                            <span id="text-quick-save">บันทึกปัจจุบัน</span>
+                        </button>
+
+                        <!-- เปลี่ยนชื่อแผนปัจจุบัน -->
+                        <button
+                            onclick="openRenameModalOfActive()"
+                            class="px-3 py-1.5 border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 rounded-xl text-[11px] font-bold transition duration-150 flex items-center gap-1 shadow-sm"
+                        >
+                            <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                            </svg>
+                            <span>เปลี่ยนชื่อ</span>
+                        </button>
+
+                        <!-- ลบแผนปัจจุบัน -->
+                        <button
+                            onclick="openDeleteModalOfActive()"
+                            class="px-3 py-1.5 border border-red-200 bg-red-50 hover:bg-red-100 text-red-700 rounded-xl text-[11px] font-bold transition duration-150 flex items-center gap-1 shadow-sm"
+                        >
+                            <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                            </svg>
+                            <span>ลบแผนนี้</span>
+                        </button>
+                        
+                        <div class="h-4 w-[1px] bg-slate-200 mx-1 hidden sm:block"></div>
+                        
+                        <!-- สร้างแผนใหม่ -->
+                        <button
+                            onclick="openSavePlanModal()"
+                            class="px-3 py-1.5 bg-orange-600 hover:bg-orange-700 text-white rounded-xl text-[11px] font-bold transition duration-150 flex items-center gap-1 shadow-sm"
+                        >
+                            <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
+                            </svg>
+                            สร้างแผนใหม่
+                        </button>
+                    </div>
+                </div>
+
+                <!-- รายชื่อแผนที่บันทึกไว้ในระบบ -->
+                <div class="space-y-1">
+                    <span class="text-[10px] text-slate-400 font-bold uppercase tracking-wider block">รายชื่อแผนงานทั้งหมดในระบบ (คลิกเพื่อเลือกเปิด):</span>
+                    <div id="plans-container" class="flex flex-wrap gap-2 pt-1"></div>
+                </div>
+            </section>
+
+            <!-- Dashboard Cards -->
+            <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+                
+                <!-- Budget Plan -->
+                <div class="bg-white border border-slate-200 rounded-2xl p-4 shadow-sm flex flex-col justify-between">
+                    <div class="flex justify-between items-start">
+                        <span class="text-slate-500 text-[10px] font-bold uppercase tracking-wider">งบประมาณตามแผน</span>
+                        <span class="p-1 bg-blue-50 text-blue-600 rounded-lg">
+                            <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 00-2 2z" />
+                            </svg>
+                        </span>
+                    </div>
+                    <div class="mt-2">
+                        <h3 id="calc-total-target" class="text-xl font-extrabold text-slate-900">฿0</h3>
+                        <div class="flex gap-2 text-slate-400 text-[10px] mt-1 font-medium">
+                            <span id="calc-shop-target-sub">Shop: ฿0</span>
+                            <span>•</span>
+                            <span id="calc-banner-target-sub">Banner: ฿0</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Actual Spent -->
+                <div class="bg-white border border-slate-200 rounded-2xl p-4 shadow-sm flex flex-col justify-between">
+                    <div class="flex justify-between items-start">
+                        <span class="text-slate-500 text-[10px] font-bold uppercase tracking-wider">ใช้จริงสะสม</span>
+                        <span class="p-1 bg-orange-50 text-orange-600 rounded-lg">
+                            <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                        </span>
+                    </div>
+                    <div class="mt-2">
+                        <h3 id="calc-total-actual" class="text-xl font-extrabold text-orange-600">฿0</h3>
+                        <div class="flex items-center gap-1.5 mt-1">
+                            <div class="w-full bg-slate-100 h-1.5 rounded-full overflow-hidden border border-slate-200/50">
+                                <div id="calc-spent-progress" class="bg-orange-500 h-1.5 rounded-full" style="width: 0%"></div>
+                            </div>
+                            <span id="calc-spent-percent" class="text-[10px] font-bold text-orange-600 whitespace-nowrap">0%</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Remaining Budget -->
+                <div class="bg-white border border-slate-200 rounded-2xl p-4 shadow-sm flex flex-col justify-between">
+                    <div class="flex justify-between items-start">
+                        <span class="text-slate-500 text-[10px] font-bold uppercase tracking-wider">งบเหลือในระบบ</span>
+                        <span class="p-1 bg-emerald-50 text-emerald-600 rounded-lg">
+                            <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+                            </svg>
+                        </span>
+                    </div>
+                    <div class="mt-2">
+                        <h3 id="calc-remaining-budget" class="text-xl font-extrabold text-emerald-600">฿0</h3>
+                        <p id="calc-completed-days" class="text-slate-400 text-[10px] mt-1 font-medium">บันทึกแล้ว 0 จาก 31 วัน</p>
+                    </div>
+                </div>
+
+                <!-- Roll-Over Budget -->
+                <div class="bg-white border border-slate-200 rounded-2xl p-4 shadow-sm flex flex-col justify-between">
+                    <div class="flex justify-between items-start">
+                        <span class="text-slate-500 text-[10px] font-bold uppercase tracking-wider">งบประหยัดสะสม (Roll-Over)</span>
+                        <span class="p-1 bg-purple-50 text-purple-600 rounded-lg">
+                            <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 1121.21 11H18M9 7h1v10H9m4-10h1v10h-1" />
+                            </svg>
+                        </span>
+                    </div>
+                    <div class="mt-2">
+                        <h3 id="calc-pacing-gap" class="text-xl font-extrabold text-purple-600">฿0</h3>
+                        <p id="calc-pacing-gap-desc" class="text-slate-400 text-[10px] mt-1 flex items-center gap-1 font-medium">
+                            <svg class="w-2.5 h-2.5 text-purple-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                            </svg>
+                            <span>ใช้น้อยกว่าเป้า เกลี่ยไปวันอื่น</span>
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Recommended Average -->
+                <div class="bg-orange-50 border-2 border-orange-500/30 rounded-2xl p-4 shadow-sm flex flex-col justify-between">
+                    <div class="flex justify-between items-start">
+                        <span class="text-orange-800 text-[10px] font-bold uppercase tracking-wider">เฉลี่ยงบที่เหลือ (แนะนำ)</span>
+                        <span class="p-1 bg-orange-100 text-orange-600 rounded-lg">
+                            <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                            </svg>
+                        </span>
+                    </div>
+                    <div class="mt-2">
+                        <h3 id="calc-recommended-spend" class="text-xl font-black text-orange-700">฿0 <span class="text-[10px] font-normal text-slate-500">/ วัน</span></h3>
+                        <p id="calc-remaining-days" class="text-slate-500 text-[10px] mt-1 font-medium">เฉลี่ยโควตาสำหรับ 0 วันที่เหลือ</p>
+                    </div>
+                </div>
+
+            </section>
+
+            <!-- Smart Preset Allocator -->
+            <section class="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm space-y-4">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-3">
+                    <h2 class="text-sm font-extrabold text-slate-800 flex items-center gap-1.5">
+                        <span>⚡</span> จัดการแม่แบบงบด่วน (Smart Preset Allocator)
+                    </h2>
+                    <div class="flex items-center gap-2">
+                        <span class="text-slate-400 text-xs hidden lg:inline font-medium">ป้อนงบแล้วกดกระจายเพื่อลงคิวแคมเปญในวันที่เหลือทันที:</span>
+                        <button 
+                            onclick="applyAllPresets()"
+                            class="px-4 py-1.5 bg-gradient-to-r from-orange-500 to-amber-600 hover:from-orange-600 hover:to-amber-700 font-extrabold text-xs text-white rounded-xl shadow-sm transition duration-150 flex items-center gap-1.5"
+                        >
+                            <span>⚡</span> กระจายงบ
+                        </button>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                    
+                    <!-- Normal Day -->
+                    <div class="bg-slate-50 p-3 rounded-xl border border-slate-150 space-y-2">
+                        <div class="flex justify-between items-center">
+                            <span class="font-bold text-xs text-blue-600">วันธรรมดา (Normal Day)</span>
+                            <button onclick="applyPresetToSelectedTypes('Normal')" class="px-2 py-0.5 bg-blue-100 hover:bg-blue-200 text-blue-700 rounded-lg text-[9px] font-bold transition">
+                                อัปเดตกลุ่มนี้
+                            </button>
+                        </div>
+                        <div class="grid grid-cols-2 gap-2 text-xs">
+                            <div>
+                                <label class="text-[10px] text-slate-500 block mb-0.5">Shop Ads</label>
+                                <input id="preset-normalShop" type="number" oninput="updatePresetState('normalShop', this.value)" class="w-full bg-white border border-slate-200 rounded-lg p-1 text-slate-800 text-center font-bold" />
+                            </div>
+                            <div>
+                                <label class="text-[10px] text-slate-500 block mb-0.5">Banner Ads</label>
+                                <input id="preset-normalBanner" type="number" oninput="updatePresetState('normalBanner', this.value)" class="w-full bg-white border border-slate-200 rounded-lg p-1 text-slate-800 text-center font-bold" />
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- D-Day -->
+                    <div class="bg-rose-50/40 p-3 rounded-xl border border-rose-100 space-y-2">
+                        <div class="flex justify-between items-center">
+                            <span class="font-bold text-xs text-rose-600">วันดับเบิ้ล (D-Day เลขคู่)</span>
+                            <button onclick="applyPresetToSelectedTypes('D-Day')" class="px-2 py-0.5 bg-rose-100 hover:bg-rose-200 text-rose-700 rounded-lg text-[9px] font-bold transition">
+                                อัปเดตกลุ่มนี้
+                            </button>
+                        </div>
+                        <div class="grid grid-cols-2 gap-2 text-xs">
+                            <div>
+                                <label class="text-[10px] text-slate-500 block mb-0.5">Shop Ads</label>
+                                <input id="preset-ddayShop" type="number" oninput="updatePresetState('ddayShop', this.value)" class="w-full bg-white border border-rose-200 rounded-lg p-1 text-rose-700 text-center font-bold" />
+                            </div>
+                            <div>
+                                <label class="text-[10px] text-slate-500 block mb-0.5">Banner Ads</label>
+                                <input id="preset-ddayBanner" type="number" oninput="updatePresetState('ddayBanner', this.value)" class="w-full bg-white border border-rose-200 rounded-lg p-1 text-rose-700 text-center font-bold" />
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Mid-Month -->
+                    <div class="bg-amber-50/40 p-3 rounded-xl border border-amber-150 space-y-2">
+                        <div class="flex justify-between items-center">
+                            <span class="font-bold text-xs text-amber-700">กลางเดือน (Mid-Month)</span>
+                            <button onclick="applyPresetToSelectedTypes('MidMonth')" class="px-2 py-0.5 bg-amber-100 hover:bg-amber-200 text-amber-800 rounded-lg text-[9px] font-bold transition">
+                                อัปเดตกลุ่มนี้
+                            </button>
+                        </div>
+                        <div class="grid grid-cols-2 gap-2 text-xs">
+                            <div>
+                                <label class="text-[10px] text-slate-500 block mb-0.5">Shop Ads</label>
+                                <input id="preset-midMonthShop" type="number" oninput="updatePresetState('midMonthShop', this.value)" class="w-full bg-white border border-amber-200 rounded-lg p-1 text-amber-700 text-center font-bold" />
+                            </div>
+                            <div>
+                                <label class="text-[10px] text-slate-500 block mb-0.5">Banner Ads</label>
+                                <input id="preset-midMonthBanner" type="number" oninput="updatePresetState('midMonthBanner', this.value)" class="w-full bg-white border border-amber-200 rounded-lg p-1 text-amber-700 text-center font-bold" />
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Payday -->
+                    <div class="bg-purple-50/40 p-3 rounded-xl border border-purple-100 space-y-2">
+                        <div class="flex justify-between items-center">
+                            <span class="font-bold text-xs text-purple-700">เงินเดือนออก (Payday)</span>
+                            <button onclick="applyPresetToSelectedTypes('Payday')" class="px-2 py-0.5 bg-purple-100 hover:bg-purple-200 text-purple-700 rounded-lg text-[9px] font-bold transition">
+                                อัปเดตกลุ่มนี้
+                            </button>
+                        </div>
+                        <div class="grid grid-cols-2 gap-2 text-xs">
+                            <div>
+                                <label class="text-[10px] text-slate-500 block mb-0.5">Shop Ads</label>
+                                <input id="preset-paydayShop" type="number" oninput="updatePresetState('paydayShop', this.value)" class="w-full bg-white border border-purple-200 rounded-lg p-1 text-purple-700 text-center font-bold" />
+                            </div>
+                            <div>
+                                <label class="text-[10px] text-slate-500 block mb-0.5">Banner Ads</label>
+                                <input id="preset-paydayBanner" type="number" oninput="updatePresetState('paydayBanner', this.value)" class="w-full bg-white border border-purple-200 rounded-lg p-1 text-purple-700 text-center font-bold" />
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- แถบปรับ % ด่วนทั้งกลุ่ม (Bulk % Scaler) -->
+                <div class="pt-3 border-t border-slate-150 flex flex-wrap items-center justify-between gap-2 text-xs bg-slate-50/80 p-2.5 rounded-xl">
+                    <div class="flex items-center gap-1.5 font-bold text-slate-700">
+                        <span class="text-amber-500">📈</span>
+                        <span>ปรับสัดส่วน % งบด่วน:</span>
+                        <span class="text-[10px] text-slate-400 font-normal hidden sm:inline">(ปรับสเกลงบตามอัตรา % ได้พร้อมกัน)</span>
+                    </div>
+                    <div class="flex items-center gap-2 flex-wrap">
+                        <span class="text-[11px] text-slate-500 font-medium">เป้าหมาย:</span>
+                        <select id="bulk-scale-target" class="bg-white border border-slate-200 rounded-lg px-2 py-1 text-xs font-semibold text-slate-700">
+                            <option value="remaining">ทุกวันที่ยังค้างบันทึก</option>
+                            <option value="Normal">เฉพาะวันธรรมดา (Normal)</option>
+                            <option value="D-Day">เฉพาะวันดับเบิ้ล (D-Day)</option>
+                            <option value="MidMonth">เฉพาะวันกลางเดือน (Mid-Month)</option>
+                            <option value="Payday">เฉพาะวันเงินเดือนออก (Payday)</option>
+                        </select>
+                        <span class="text-[11px] text-slate-500 font-medium">ปรับเป็น:</span>
+                        <div class="flex items-center gap-1">
+                            <input id="bulk-scale-percent" type="number" value="110" step="5" min="10" max="500" class="w-16 bg-white border border-slate-200 rounded-lg px-2 py-1 text-center font-bold text-amber-700 text-xs" />
+                            <span class="font-bold text-slate-500 text-xs">%</span>
+                        </div>
+                        <button onclick="applyBulkScale()" class="px-3 py-1 bg-amber-500 hover:bg-amber-600 text-white rounded-lg font-bold text-xs shadow-sm transition">
+                            นำไปใช้
+                        </button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Table Section -->
+            <section class="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden">
+                <div class="p-4 border-b border-slate-100 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-slate-50/50">
+                    <div>
+                        <h3 class="text-sm font-extrabold text-slate-900">📅 ตารางจัดสรรงบรายวัน (Campaign Tracker Table)</h3>
+                        <p class="text-slate-400 text-xs mt-0.5">ปรับเป้าหมาย (Target) หรือยอดใช้จริง (Actual) ยอดผลรวมของแผนและตัวเลขเกลี่ยงบส่วนต่างที่เหลือจะอัปเดตให้อัตโนมัติ</p>
+                    </div>
+                    
+                    <div class="flex gap-2 text-[10px] flex-wrap">
+                        <span class="px-2 py-0.5 rounded-lg bg-rose-50 border border-rose-200 text-rose-700 flex items-center gap-1 font-semibold">
+                            <span class="w-1.5 h-1.5 rounded-full bg-rose-500"></span> D-Day (คู่)
+                        </span>
+                        <span class="px-2 py-0.5 rounded-lg bg-purple-50 border border-purple-200 text-purple-700 flex items-center gap-1 font-semibold">
+                            <span class="w-1.5 h-1.5 rounded-full bg-purple-500"></span> Payday
+                        </span>
+                        <span class="px-2 py-0.5 rounded-lg bg-amber-50 border border-amber-200 text-amber-700 flex items-center gap-1 font-semibold">
+                            <span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span> Mid-Month
+                        </span>
+                    </div>
+                </div>
+
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse text-xs md:text-sm">
+                        <thead class="bg-slate-100 border-b border-slate-200 text-slate-600 uppercase font-bold text-[10px] tracking-wider">
+                            <tr>
+                                <th class="py-3 px-3 text-center w-12 text-slate-700">วันที่</th>
+                                <th class="py-3 px-3 w-32 text-slate-700">ประเภทแคมเปญ</th>
+                                <th class="py-3 px-2 text-center w-28 bg-amber-50/50 text-amber-900">% ปรับงบ (Adj %)</th>
+                                <th class="py-3 px-3 text-right bg-blue-50/30 text-blue-800">Shop Ads Target</th>
+                                <th class="py-3 px-3 text-right bg-orange-50/30 text-orange-800">Shop Actual Spent</th>
+                                <th class="py-3 px-3 text-right bg-blue-50/30 text-blue-800">Banner Target</th>
+                                <th class="py-3 px-3 text-right bg-orange-50/30 text-orange-800">Banner Actual Spent</th>
+                                <th class="py-3 px-3 text-right font-bold text-slate-800 border-l border-slate-200 bg-slate-50/50">Total Planned</th>
+                                <th class="py-3 px-3 text-right font-bold text-slate-800 bg-slate-50/50">Total Actual</th>
+                                <th class="py-3 px-3 text-right font-bold text-slate-800 bg-slate-50/50">ส่วนต่างแผนเดิม (Variance)</th>
+                                <th class="py-3 px-3 text-center">บันทึกผล</th>
+                            </tr>
+                        </thead>
+                        <tbody id="table-body" class="divide-y divide-slate-100 text-xs">
+                            <!-- แถวจะถูกเรนเดอร์ผ่านทาง JavaScript -->
+                        </tbody>
+                        <tfoot class="bg-slate-100 border-t border-slate-200 font-bold text-slate-700 text-xs">
+                            <tr>
+                                <td class="py-4 px-3 text-center text-slate-900 font-extrabold">รวม</td>
+                                <td class="py-4 px-3"></td>
+                                <td class="py-4 px-2 text-center text-[10px] text-slate-400 font-bold">100% สัดส่วน</td>
+                                <td id="foot-shop-target" class="py-4 px-3 text-right bg-blue-50/50 text-blue-800 text-xs font-extrabold">฿0</td>
+                                <td id="foot-shop-actual" class="py-4 px-3 text-right bg-orange-50/50 text-orange-800 text-xs font-extrabold">฿0</td>
+                                <td id="foot-banner-target" class="py-4 px-3 text-right bg-blue-50/50 text-blue-800 text-xs font-extrabold">฿0</td>
+                                <td id="foot-banner-actual" class="py-4 px-3 text-right bg-orange-50/50 text-orange-800 text-xs font-extrabold">฿0</td>
+                                <td id="foot-total-target" class="py-4 px-3 text-right text-slate-900 text-xs border-l border-slate-200 font-extrabold">฿0</td>
+                                <td id="foot-total-actual" class="py-4 px-3 text-right text-orange-600 text-xs font-extrabold">฿0</td>
+                                <td id="foot-variance" class="py-4 px-3 text-right text-xs">฿0</td>
+                                <td class="py-4 px-3"></td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+            </section>
+
+            <!-- Explanation Footer -->
+            <footer class="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm text-slate-500 text-[11px] space-y-2">
+                <h4 class="font-bold text-slate-800 text-xs flex items-center gap-1">
+                    <span class="text-orange-500">💡</span> คำชี้แจงระบบเกลี่ยเงินโฆษณาสะสม (Roll-Over Campaign Strategy):
+                </h4>
+                <p>• เมื่อทำการ <strong>"บันทึกแล้ว"</strong> ระบบจะปรับ <strong>Shop Ads Target / Banner Target</strong> ของวันนั้นให้เท่ากับยอดจ่ายจริงโดยอัตโนมัติ เพื่อรักษาความเป็นระเบียบและสอดคล้องกับงบจริงที่เกิดขึ้น</p>
+                <p>• ระบบจำยอดแผนเดิม (Original Target) ไว้ในฐานข้อมูลเบื้องหลัง เพื่อใช้คำนวณ <strong>งบประหยัดสะสม (Roll-Over)</strong> ส่งผลให้ "เฉลี่ยงบที่เหลือ (แนะนำ)" ยังสามารถเกลี่ยเงินได้อย่างแม่นยำ 100% โดยไม่อิงตามตารางที่แปรผันไป</p>
+            </footer>
+
         </div>
-      </div>
-      <div class="flex items-center gap-2 flex-wrap">
-        <select id="monthSelect" class="text-sm border border-slate-200 rounded-xl px-3 py-1.5 bg-white font-medium"></select>
-        <button onclick="clearActuals()" class="btn btn-ghost text-xs">ล้างยอดใช้จริง</button>
-        <button onclick="exportJSON()" class="btn btn-ghost text-xs">Export</button>
-        <label class="btn btn-ghost text-xs cursor-pointer">
-          Import
-          <input type="file" accept=".json" class="hidden" onchange="importJSON(event)" />
-        </label>
-      </div>
     </div>
-  </header>
 
-  <main class="max-w-7xl mx-auto px-3 py-4 space-y-4">
+    <!-- ==========================================
+        MODAL WINDOWS (HTML PURE)
+       ========================================== -->
 
-    <!-- Plans -->
-    <section class="card p-4">
-      <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
-        <h2 class="font-bold text-sm">📋 แผนงาน</h2>
-        <div class="flex gap-2">
-          <button onclick="renameCurrentPlan()" class="btn btn-ghost text-xs">เปลี่ยนชื่อ</button>
-          <button onclick="deleteCurrentPlan()" class="btn btn-danger text-xs">ลบแผน</button>
-          <button onclick="createPlan()" class="btn btn-primary text-xs">+ แผนใหม่</button>
-        </div>
-      </div>
-      <div id="planList" class="flex flex-wrap gap-2"></div>
-    </section>
-
-    <!-- Summary Cards -->
-    <section class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3" id="summaryCards"></section>
-
-    <!-- Ad Channels (editable) -->
-    <section class="card p-4">
-      <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
-        <div>
-          <h2 class="font-bold text-sm">📢 ช่องโฆษณา (แก้ไขได้อิสระ)</h2>
-          <p class="text-xs text-slate-400">เพิ่มช่องใหม่ได้ เช่น Live, Search, Video ฯลฯ — งบของแต่ละช่องตั้งในประเภทวันด้านล่าง</p>
-        </div>
-        <button onclick="addChannel()" class="btn btn-primary text-xs">+ เพิ่มช่อง</button>
-      </div>
-      <div id="channelList" class="flex flex-wrap gap-2"></div>
-    </section>
-
-    <!-- Day Types + Budget per channel (editable) -->
-    <section class="card p-4">
-      <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
-        <div>
-          <h2 class="font-bold text-sm">🏷️ กำหนดงบแต่ละช่อง ตามประเภทวัน</h2>
-          <p class="text-xs text-slate-400">ตั้งงบเป้าของทุกช่องโฆษณาสำหรับแต่ละประเภทวัน → จากนั้นกดกระจายลงตารางรายวัน</p>
-        </div>
-        <button onclick="addDayType()" class="btn btn-primary text-xs">+ เพิ่มประเภทวัน</button>
-      </div>
-      <div id="dayTypeList" class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3"></div>
-    </section>
-
-    <!-- Quick Distribute -->
-    <section class="card p-4 border-2 border-orange-200 bg-orange-50/30">
-      <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
-        <div>
-          <h2 class="font-bold text-sm text-orange-900">⚡ กระจายงบเข้าแต่ละช่องโฆษณา</h2>
-          <p class="text-xs text-orange-700/80">ระบบจะนำงบที่ตั้งไว้ในประเภทวัน ไปใส่ในตารางรายวันตามประเภทวันที่เลือกไว้ของแต่ละวัน</p>
-        </div>
-      </div>
-      <div class="flex flex-wrap gap-3 items-center mb-3">
-        <label class="flex items-center gap-2 text-xs bg-white border border-slate-200 rounded-xl px-3 py-2 cursor-pointer">
-          <input type="radio" name="distMode" value="empty" checked class="accent-orange-500" />
-          ใส่เฉพาะวันที่ยังไม่มีเป้า
-        </label>
-        <label class="flex items-center gap-2 text-xs bg-white border border-slate-200 rounded-xl px-3 py-2 cursor-pointer">
-          <input type="radio" name="distMode" value="unsaved" class="accent-orange-500" />
-          ทับเฉพาะวันที่ยังไม่บันทึก
-        </label>
-        <label class="flex items-center gap-2 text-xs bg-white border border-slate-200 rounded-xl px-3 py-2 cursor-pointer">
-          <input type="radio" name="distMode" value="all" class="accent-orange-500" />
-          ทับทั้งหมดทุกวัน
-        </label>
-      </div>
-      <div class="flex flex-wrap gap-2">
-        <button onclick="distributePresets()" class="btn btn-primary text-sm px-4 py-2">
-          🚀 กระจายงบตามประเภทวัน ทั้งหมด
-        </button>
-        <button onclick="distributePresetsByType()" class="btn btn-ghost text-xs">
-          กระจายทีละประเภท (เลือกในกล่องประเภทวัน)
-        </button>
-      </div>
-    </section>
-
-    <!-- Daily Table -->
-    <section class="card overflow-hidden">
-      <div class="p-4 border-b border-slate-100 flex flex-wrap items-center justify-between gap-2">
-        <div>
-          <h2 class="font-bold text-sm">📅 ตารางรายวัน</h2>
-          <p class="text-xs text-slate-400">คลิกช่องใดก็ได้เพื่อแก้ไข • Auto-save</p>
-        </div>
-        <div class="flex gap-2">
-          <button onclick="fillRemainingFromAvg()" class="btn btn-ghost text-xs">เติมงบเฉลี่ยวันที่เหลือ</button>
-        </div>
-      </div>
-      <div class="table-scroll">
-        <table class="w-full text-sm" id="dailyTable">
-          <thead class="bg-slate-100 text-slate-600 text-xs uppercase" id="tableHead"></thead>
-          <tbody id="tableBody"></tbody>
-          <tfoot class="bg-slate-50 font-semibold" id="tableFoot"></tfoot>
-        </table>
-      </div>
-    </section>
-
-    <footer class="text-center text-xs text-slate-400 py-6">
-      Shopee Ad Budget Tracker • ข้อมูลเก็บในเครื่องคุณ (LocalStorage) • สร้างเพื่อใช้งานง่ายและแก้ไขได้อิสระ
-    </footer>
-  </main>
-
-  <script>
-    // ===================== STATE =====================
-    const STORAGE_KEY = 'shopee_ad_budget_v2';
-    const DEFAULT_CHANNELS = [
-      { id: 'shop', name: 'Shop Ads', color: 'blue' },
-      { id: 'banner', name: 'Banner Ads', color: 'violet' }
-    ];
-    const DEFAULT_DAY_TYPES = [
-      { id: 'normal', name: 'วันธรรมดา', color: 'slate', defaults: { shop: 3000, banner: 1000 } },
-      { id: 'dday', name: 'D-Day (เลขคู่)', color: 'rose', defaults: { shop: 10000, banner: 2000 } },
-      { id: 'mid', name: 'กลางเดือน', color: 'amber', defaults: { shop: 3000, banner: 1000 } },
-      { id: 'payday', name: 'เงินเดือนออก', color: 'purple', defaults: { shop: 10000, banner: 2000 } }
-    ];
-
-    let state = {
-      plans: [],
-      currentPlanId: null
-    };
-
-    // ===================== HELPERS =====================
-    function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 7); }
-    function money(n) { return '฿' + (Number(n) || 0).toLocaleString('th-TH'); }
-    function daysInMonth(ym) {
-      const [y, m] = ym.split('-').map(Number);
-      return new Date(y, m, 0).getDate();
-    }
-    function currentYM() {
-      const d = new Date();
-      return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0');
-    }
-    function getPlan() {
-      return state.plans.find(p => p.id === state.currentPlanId);
-    }
-    function save() {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-    }
-    function load() {
-      try {
-        const raw = localStorage.getItem(STORAGE_KEY);
-        if (raw) {
-          state = JSON.parse(raw);
-          if (!state.plans?.length) initFirstPlan();
-          if (!state.currentPlanId) state.currentPlanId = state.plans[0].id;
-        } else {
-          initFirstPlan();
-        }
-      } catch (e) {
-        initFirstPlan();
-      }
-    }
-    function initFirstPlan() {
-      const ym = currentYM();
-      const plan = makePlan('แผนหลัก ' + ym, ym);
-      state.plans = [plan];
-      state.currentPlanId = plan.id;
-      save();
-    }
-    function makePlan(name, ym) {
-      const channels = JSON.parse(JSON.stringify(DEFAULT_CHANNELS));
-      const dayTypes = JSON.parse(JSON.stringify(DEFAULT_DAY_TYPES));
-      const n = daysInMonth(ym);
-      const days = [];
-      for (let d = 1; d <= n; d++) {
-        const targets = {};
-        const actuals = {};
-        channels.forEach(c => { targets[c.id] = 0; actuals[c.id] = 0; });
-        days.push({
-          day: d,
-          typeId: 'normal',
-          targets,
-          actuals,
-          note: '',
-          saved: false
-        });
-      }
-      return { id: uid(), name, month: ym, channels, dayTypes, days };
-    }
-
-    // ===================== RENDER =====================
-    function renderAll() {
-      renderMonthSelect();
-      renderPlans();
-      renderDayTypes();
-      renderChannels();
-      renderTable();
-      renderSummary();
-    }
-
-    function renderMonthSelect() {
-      const sel = document.getElementById('monthSelect');
-      const plan = getPlan();
-      const options = [];
-      const now = new Date();
-      for (let i = -6; i <= 12; i++) {
-        const d = new Date(now.getFullYear(), now.getMonth() + i, 1);
-        const ym = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0');
-        const label = d.toLocaleDateString('th-TH', { year: 'numeric', month: 'long' });
-        options.push(`<option value="${ym}" ${plan.month === ym ? 'selected' : ''}>${label}</option>`);
-      }
-      sel.innerHTML = options.join('');
-      sel.onchange = () => {
-        const plan = getPlan();
-        const newYm = sel.value;
-        if (newYm === plan.month) return;
-        if (!confirm('เปลี่ยนเดือนจะสร้างตารางวันใหม่ (ข้อมูลวันเดิมจะหาย) ยืนยัน?')) {
-          sel.value = plan.month;
-          return;
-        }
-        plan.month = newYm;
-        const n = daysInMonth(newYm);
-        const channels = plan.channels;
-        plan.days = [];
-        for (let d = 1; d <= n; d++) {
-          const targets = {}; const actuals = {};
-          channels.forEach(c => { targets[c.id] = 0; actuals[c.id] = 0; });
-          plan.days.push({ day: d, typeId: plan.dayTypes[0]?.id || 'normal', targets, actuals, note: '', saved: false });
-        }
-        save(); renderAll();
-      };
-    }
-
-    function renderPlans() {
-      const el = document.getElementById('planList');
-      el.innerHTML = state.plans.map(p => {
-        const active = p.id === state.currentPlanId;
-        return `<button onclick="switchPlan('${p.id}')"
-          class="px-3 py-1.5 rounded-xl text-xs font-semibold border transition
-          ${active ? 'bg-orange-100 border-orange-400 text-orange-900 ring-1 ring-orange-300' : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'}">
-          ${active ? '● ' : ''}${escapeHtml(p.name)}
-        </button>`;
-      }).join('');
-    }
-
-    function renderDayTypes() {
-      const plan = getPlan();
-      const el = document.getElementById('dayTypeList');
-      el.innerHTML = plan.dayTypes.map(dt => {
-        let total = 0;
-        const defaultsHtml = plan.channels.map(ch => {
-          const val = Number(dt.defaults[ch.id]) || 0;
-          total += val;
-          return `
-          <div class="flex items-center gap-2">
-            <span class="text-[11px] text-slate-600 w-24 truncate font-medium">${escapeHtml(ch.name)}</span>
-            <input type="number" min="0" step="100" class="input-num flex-1 text-sm border border-slate-200 rounded-lg px-2 py-1 text-right font-semibold text-blue-700 bg-white"
-              value="${val}"
-              onchange="updateDayTypeDefault('${dt.id}', '${ch.id}', this.value)" />
-            <span class="text-[10px] text-slate-400">บาท</span>
-          </div>`;
-        }).join('');
-        const dayCount = plan.days.filter(d => d.typeId === dt.id).length;
-        return `
-          <div class="border border-slate-200 rounded-xl p-3 bg-white shadow-sm">
-            <div class="flex items-center gap-2 mb-3">
-              <input type="text" class="flex-1 text-sm font-bold border border-transparent hover:border-slate-200 focus:border-orange-300 rounded-lg px-2 py-1 bg-slate-50"
-                value="${escapeHtml(dt.name)}"
-                onchange="renameDayType('${dt.id}', this.value)" />
-              <button onclick="removeDayType('${dt.id}')" class="text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg p-1.5 text-xs" title="ลบประเภทนี้">✕</button>
+    <!-- Modal: Save Plan -->
+    <div id="modal-save" class="fixed inset-0 bg-slate-900/40 backdrop-blur-xs flex items-center justify-center p-4 z-50 hidden">
+        <div class="bg-white rounded-2xl max-w-md w-full border border-slate-200 p-6 shadow-xl space-y-4">
+            <div class="flex justify-between items-center border-b border-slate-100 pb-2">
+                <h3 class="font-black text-slate-900 text-sm">สร้างแผนงบประมาณใหม่</h3>
+                <button onclick="closeModal('save')" class="text-slate-400 hover:text-slate-600 transition">
+                    <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+                </button>
             </div>
-            <div class="space-y-1.5 mb-3">${defaultsHtml}</div>
-            <div class="flex items-center justify-between pt-2 border-t border-slate-100">
-              <div class="text-xs">
-                <span class="text-slate-500">รวมต่อวัน:</span>
-                <span class="font-bold text-orange-600 ml-1">${money(total)}</span>
-                <span class="text-slate-400 ml-2">(${dayCount} วัน)</span>
-              </div>
-              <button onclick="applyDayTypeToMatching('${dt.id}')"
-                class="text-[11px] px-2.5 py-1 rounded-lg bg-orange-100 hover:bg-orange-200 text-orange-800 font-semibold transition"
-                title="ใส่งบนี้ลงทุกวันที่เป็นประเภทนี้">
-                ใช้กับวันที่เป็นประเภทนี้
+            <div class="space-y-2">
+                <label class="text-xs text-slate-500 font-bold block">ระบุชื่อแผนงบประมาณใหม่ของคุณ</label>
+                <input id="input-new-plan-name" type="text" placeholder="เช่น แผนโฆษณาพฤษภาคม 5.5..." class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs focus:ring-1 focus:ring-orange-500 focus:bg-white text-slate-800 font-medium" />
+            </div>
+            <div class="flex justify-end gap-2 text-xs font-bold pt-2">
+                <button onclick="closeModal('save')" class="px-4 py-2 border border-slate-200 text-slate-600 rounded-xl hover:bg-slate-50 transition">ยกเลิก</button>
+                <button onclick="saveAsNewPlan()" class="px-4 py-2 bg-orange-600 text-white rounded-xl hover:bg-orange-700 transition">บันทึกแผนใหม่</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Rename Plan -->
+    <div id="modal-rename" class="fixed inset-0 bg-slate-900/40 backdrop-blur-xs flex items-center justify-center p-4 z-50 hidden">
+        <div class="bg-white rounded-2xl max-w-md w-full border border-slate-200 p-6 shadow-xl space-y-4">
+            <div class="flex justify-between items-center border-b border-slate-100 pb-2">
+                <h3 class="font-black text-slate-900 text-sm">แก้ไขชื่อแผน</h3>
+                <button onclick="closeModal('rename')" class="text-slate-400 hover:text-slate-600 transition">
+                    <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+                </button>
+            </div>
+            <div class="space-y-2">
+                <label class="text-xs text-slate-500 font-bold block">ชื่อแผนใหม่</label>
+                <input id="input-rename-name" type="text" placeholder="ระบุชื่อใหม่ที่นี่..." class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs focus:ring-1 focus:ring-orange-500 focus:bg-white text-slate-800 font-medium" />
+            </div>
+            <div class="flex justify-end gap-2 text-xs font-bold pt-2">
+                <button onclick="closeModal('rename')" class="px-4 py-2 border border-slate-200 text-slate-600 rounded-xl hover:bg-slate-50 transition">ยกเลิก</button>
+                <button onclick="confirmRenamePlan()" class="px-4 py-2 bg-orange-600 text-white rounded-xl hover:bg-orange-700 transition">ยืนยันการเปลี่ยนชื่อ</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Delete Plan -->
+    <div id="modal-delete" class="fixed inset-0 bg-slate-900/40 backdrop-blur-xs flex items-center justify-center p-4 z-50 hidden">
+        <div class="bg-white rounded-2xl max-w-md w-full border border-slate-200 p-6 shadow-xl space-y-4">
+            <div class="flex justify-between items-center border-b border-red-50 pb-2">
+                <h3 class="font-black text-red-600 text-sm flex items-center gap-1">⚠️ ยืนยันการลบแผน</h3>
+                <button onclick="closeModal('delete')" class="text-slate-400 hover:text-slate-600 transition">
+                    <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+                </button>
+            </div>
+            <p class="text-xs text-slate-600 leading-relaxed">
+                คุณแน่ใจหรือไม่ที่จะลบแผนโฆษณานี้? <br />
+                การลบนี้จะทำให้ข้อมูลแผนที่บันทึกไว้หายไปอย่างถาวรและไม่สามารถเรียกคืนได้
+            </p>
+            <div class="flex justify-end gap-2 text-xs font-bold pt-2">
+                <button onclick="closeModal('delete')" class="px-4 py-2 border border-slate-200 text-slate-600 rounded-xl hover:bg-slate-50 transition">ยกเลิก</button>
+                <button onclick="confirmDeletePlan()" class="px-4 py-2 bg-red-600 text-white rounded-xl hover:bg-red-700 transition">ใช่, ฉันต้องการลบแผนนี้</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Reset Confirmation -->
+    <div id="modal-reset" class="fixed inset-0 bg-slate-900/40 backdrop-blur-xs flex items-center justify-center p-4 z-50 hidden">
+        <div class="bg-white rounded-2xl max-w-md w-full border border-slate-200 p-6 shadow-xl space-y-4">
+            <div class="flex justify-between items-center border-b border-red-50 pb-2">
+                <h3 class="font-black text-red-600 text-sm flex items-center gap-1">⚠️ ยืนยันการเคลียร์ข้อมูล</h3>
+                <button onclick="closeModal('reset')" class="text-slate-400 hover:text-slate-600 transition">
+                    <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+                </button>
+            </div>
+            <p class="text-xs text-slate-600 leading-relaxed">
+                คุณแน่ใจหรือไม่ที่จะล้างข้อมูล <strong class="text-slate-900">"ยอดใช้จริงทั้งหมด (Actual Spent)"</strong> และสลับสถานะทุกวันกลับไปเป็น "ค้างบันทึก"? <br />
+                ระบบจะกู้คืนค่าเป้าหมายเดิม (Original Target) ของคุณให้ในทุกวันของเดือนนี้โดยอัตโนมัติ
+            </p>
+            <div class="flex justify-end gap-2 text-xs font-bold pt-2">
+                <button onclick="closeModal('reset')" class="px-4 py-2 border border-slate-200 text-slate-600 rounded-xl hover:bg-slate-50 transition">ยกเลิก</button>
+                <button onclick="confirmResetActuals()" class="px-4 py-2 bg-red-600 text-white rounded-xl hover:bg-red-700 transition">ใช่, ล้างข้อมูลจริงทั้งหมด</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==========================================
+        CORE WEB APPLICATION SCRIPT
+       ========================================== -->
+    <script>
+        const DEFAULT_PRESETS = {
+          normalShop: 3000,
+          normalBanner: 1000,
+          ddayShop: 10000,
+          ddayBanner: 2000,
+          midMonthShop: 3000,
+          midMonthBanner: 1000,
+          paydayShop: 10000,
+          paydayBanner: 2000
+        };
+
+        // ข้อมูลตั้งต้นดิบตามไฟล์ภาพ image_4ddbdd.png
+        const INITIAL_DAYS_DATA_RAW = [
+          { date: 1, type: 'Normal', shopTarget: 5000, shopActual: 5000, bannerTarget: 1000, bannerActual: 0, isCompleted: true },
+          { date: 2, type: 'Normal', shopTarget: 5000, shopActual: 5000, bannerTarget: 1000, bannerActual: 0, isCompleted: true },
+          { date: 3, type: 'MidMonth', shopTarget: 5700, shopActual: 5700, bannerTarget: 1000, bannerActual: 0, isCompleted: true },
+          { date: 4, type: 'Normal', shopTarget: 6300, shopActual: 0, bannerTarget: 1000, bannerActual: 0, isCompleted: false },
+          { date: 5, type: 'D-Day', shopTarget: 10000, shopActual: 0, bannerTarget: 2000, bannerActual: 0, isCompleted: false },
+          { date: 6, type: 'D-Day', shopTarget: 10000, shopActual: 0, bannerTarget: 2000, bannerActual: 0, isCompleted: false },
+          { date: 7, type: 'Normal', shopTarget: 3000, shopActual: 0, bannerTarget: 1000, bannerActual: 0, isCompleted: false },
+          { date: 8, type: 'Normal', shopTarget: 3000, shopActual: 0, bannerTarget: 1000, bannerActual: 0, isCompleted: false },
+          { date: 9, type: 'Normal', shopTarget: 3000, shopActual: 0, bannerTarget: 1000, bannerActual: 0, isCompleted: false },
+          { date: 10, type: 'Normal', shopTarget: 3000, shopActual: 0, bannerTarget: 1000, bannerActual: 0, isCompleted: false },
+          { date: 11, type: 'Normal', shopTarget: 3000, shopActual: 0, bannerTarget: 1000, bannerActual: 0, isCompleted: false },
+          { date: 12, type: 'Normal', shopTarget: 3000, shopActual: 0, bannerTarget: 1000, bannerActual: 0, isCompleted: false },
+          { date: 13, type: 'Normal', shopTarget: 3000, shopActual: 0, bannerTarget: 1000, bannerActual: 0, isCompleted: false },
+          { date: 14, type: 'Normal', shopTarget: 3000, shopActual: 0, bannerTarget: 1000, bannerActual: 0, isCompleted: false },
+          { date: 15, type: 'MidMonth', shopTarget: 3000, shopActual: 0, bannerTarget: 1000, bannerActual: 0, isCompleted: false },
+          { date: 16, type: 'Normal', shopTarget: 3000, shopActual: 0, bannerTarget: 1000, bannerActual: 0, isCompleted: false },
+          { date: 17, type: 'Normal', shopTarget: 3000, shopActual: 0, bannerTarget: 1000, bannerActual: 0, isCompleted: false },
+          { date: 18, type: 'Normal', shopTarget: 3000, shopActual: 0, bannerTarget: 1000, bannerActual: 0, isCompleted: false },
+          { date: 19, type: 'Normal', shopTarget: 3000, shopActual: 0, bannerTarget: 1000, bannerActual: 0, isCompleted: false },
+          { date: 20, type: 'Normal', shopTarget: 3000, shopActual: 0, bannerTarget: 1000, bannerActual: 0, isCompleted: false },
+          { date: 21, type: 'Normal', shopTarget: 3000, shopActual: 0, bannerTarget: 1000, bannerActual: 0, isCompleted: false },
+          { date: 22, type: 'Normal', shopTarget: 3000, shopActual: 0, bannerTarget: 1000, bannerActual: 0, isCompleted: false },
+          { date: 23, type: 'Normal', shopTarget: 3000, shopActual: 0, bannerTarget: 1000, bannerActual: 0, isCompleted: false },
+          { date: 24, type: 'Payday', shopTarget: 10000, shopActual: 0, bannerTarget: 2000, bannerActual: 0, isCompleted: false },
+          { date: 25, type: 'Payday', shopTarget: 10000, shopActual: 0, bannerTarget: 2000, bannerActual: 0, isCompleted: false },
+          { date: 26, type: 'Normal', shopTarget: 3000, shopActual: 0, bannerTarget: 1000, bannerActual: 0, isCompleted: false },
+          { date: 27, type: 'Normal', shopTarget: 3000, shopActual: 0, bannerTarget: 1000, bannerActual: 0, isCompleted: false },
+          { date: 28, type: 'Normal', shopTarget: 3000, shopActual: 0, bannerTarget: 1000, bannerActual: 0, isCompleted: false },
+          { date: 29, type: 'Normal', shopTarget: 3000, shopActual: 0, bannerTarget: 1000, bannerActual: 0, isCompleted: false },
+          { date: 30, type: 'Normal', shopTarget: 3000, shopActual: 0, bannerTarget: 1000, bannerActual: 0, isCompleted: false },
+          { date: 31, type: 'Normal', shopTarget: 3000, shopActual: 0, bannerTarget: 1000, bannerActual: 0, isCompleted: false },
+        ];
+
+        // สร้าง Object โคลนค่าต้นฉบับ
+        const INITIAL_DAYS_DATA = INITIAL_DAYS_DATA_RAW.map(d => ({
+          ...d,
+          percentAdj: 100,
+          baseShopTarget: d.shopTarget,
+          baseBannerTarget: d.bannerTarget,
+          originalShopTarget: d.shopTarget,
+          originalBannerTarget: d.bannerTarget,
+          shopTarget: d.isCompleted ? d.shopActual : d.shopTarget,
+          bannerTarget: d.isCompleted ? d.bannerActual : d.bannerTarget
+        }));
+
+        // ระบบจัดเก็บบนเบราว์เซอร์
+        let state = {
+          days: JSON.parse(JSON.stringify(INITIAL_DAYS_DATA)),
+          presets: { ...DEFAULT_PRESETS },
+          selectedMonth: '03',
+          selectedPlanId: 'default-march',
+          plans: [
+            {
+              id: 'default-march',
+              name: 'แผนหลัก มีนาคม (3.3 Campaign)',
+              month: '03',
+              presets: { ...DEFAULT_PRESETS },
+              days: JSON.parse(JSON.stringify(INITIAL_DAYS_DATA))
+            }
+          ]
+        };
+
+        // โหลดข้อมูลเก่าจาก localStorage หากมี
+        const savedState = localStorage.getItem('shopee_ads_smart_state');
+        if (savedState) {
+          try {
+            state = JSON.parse(savedState);
+            // ตรวจสอบความสมบูรณ์ของฟิลด์ % ที่เพิ่มเข้ามาใหม่
+            if (state.days) {
+              state.days.forEach(d => {
+                if (d.percentAdj === undefined) d.percentAdj = 100;
+                if (d.baseShopTarget === undefined) d.baseShopTarget = d.originalShopTarget || d.shopTarget;
+                if (d.baseBannerTarget === undefined) d.baseBannerTarget = d.originalBannerTarget || d.bannerTarget;
+              });
+            }
+          } catch(e) {
+            console.error("Failed to load saved state", e);
+          }
+        }
+
+        // โหลด Presets จากฟังก์ชันหลักเพื่อเติมให้ฟอร์มด้านบน
+        function syncPresetFormInputs() {
+          const keys = Object.keys(state.presets);
+          keys.forEach(key => {
+            const input = document.getElementById(`preset-${key}`);
+            if (input) input.value = state.presets[key];
+          });
+        }
+
+        function updatePresetState(key, value) {
+          state.presets[key] = parseInt(value, 10) || 0;
+          saveStateToStorage();
+        }
+
+        // เซฟข้อมูล และออโต้ซิงค์ทุกวันกับแผนที่เลือก
+        function saveStateToStorage() {
+          state.plans = state.plans.map(p => {
+            if (p.id === state.selectedPlanId) {
+              return {
+                ...p,
+                month: state.selectedMonth,
+                presets: { ...state.presets },
+                days: JSON.parse(JSON.stringify(state.days))
+              };
+            }
+            return p;
+          });
+          localStorage.setItem('shopee_ads_smart_state', JSON.stringify(state));
+        }
+
+        // ฟังก์ชันคำนวณวันทั้งหมดในเดือนที่เลือก
+        function getDaysCountInMonth(month) {
+          const daysInMonths = { '02': 28, '04': 30, '06': 30, '09': 30, '11': 30 };
+          return daysInMonths[month] || 31;
+        }
+
+        // ระบบเปลี่ยนสถานะเดือน
+        function changeMonth(month) {
+          state.selectedMonth = month;
+          const count = getDaysCountInMonth(month);
+          
+          if (state.days.length < count) {
+            const added = Array.from({ length: count - state.days.length }, (_, i) => {
+              const dayNum = state.days.length + i + 1;
+              const initialShop = state.presets.normalShop;
+              const initialBanner = state.presets.normalBanner;
+              return {
+                date: dayNum,
+                type: getDayTypeByRule(dayNum, month),
+                percentAdj: 100,
+                baseShopTarget: initialShop,
+                baseBannerTarget: initialBanner,
+                shopTarget: initialShop,
+                originalShopTarget: initialShop,
+                shopActual: 0,
+                bannerTarget: initialBanner,
+                originalBannerTarget: initialBanner,
+                bannerActual: 0,
+                isCompleted: false
+              };
+            });
+            state.days = [...state.days, ...added];
+          } else {
+            state.days = state.days.slice(0, count);
+          }
+          
+          saveStateToStorage();
+          initTableHTML();
+          recalculate();
+        }
+
+        function getDayTypeByRule(day, month) {
+          const doubleDigit = parseInt(month, 10);
+          if (day === doubleDigit) return 'D-Day';
+          if (day >= 24 && day <= 26) return 'Payday';
+          if (day === 15) return 'MidMonth';
+          return 'Normal';
+        }
+
+        // ดึงข้อมูล Row ใหม่ทั้งหมดและจัดรูปแบบ
+        function initTableHTML() {
+          const tbody = document.getElementById('table-body');
+          tbody.innerHTML = '';
+          
+          state.days.forEach(day => {
+            const row = document.createElement('tr');
+            row.id = `row-${day.date}`;
+            
+            let rowBgClass = "hover:bg-slate-50/50";
+            if (day.type === 'D-Day') rowBgClass = "bg-rose-50/10 hover:bg-rose-50/20";
+            else if (day.type === 'Payday') rowBgClass = "bg-purple-50/10 hover:bg-purple-50/20";
+            else if (day.type === 'MidMonth') rowBgClass = "bg-amber-50/10 hover:bg-amber-50/20";
+            
+            row.className = `${rowBgClass} transition duration-150`;
+            
+            row.innerHTML = `
+                <!-- Date -->
+                <td class="py-2.5 px-3 text-center font-bold text-slate-700 text-xs">${day.date}</td>
+                
+                <!-- Campaign Type Selector -->
+                <td class="py-2.5 px-3">
+                    <select
+                        id="selectType-${day.date}"
+                        onchange="updateRowType(${day.date}, this.value)"
+                        ${day.isCompleted ? 'disabled' : ''}
+                        class="w-full text-[11px] p-1 rounded-lg font-bold border-slate-200 border cursor-pointer focus:ring-1 focus:ring-orange-500 focus:border-orange-500 disabled:opacity-75 ${
+                          day.type === 'D-Day' ? 'bg-rose-50 text-rose-700 border-rose-150' :
+                          day.type === 'Payday' ? 'bg-purple-50 text-purple-700 border-purple-150' :
+                          day.type === 'MidMonth' ? 'bg-amber-50 text-amber-700 border-amber-150' :
+                          'bg-slate-50 text-slate-600'
+                        }"
+                    >
+                        <option value="Normal" ${day.type === 'Normal' ? 'selected' : ''}>Normal Day</option>
+                        <option value="D-Day" ${day.type === 'D-Day' ? 'selected' : ''}>🔥 D-Day (คู่)</option>
+                        <option value="MidMonth" ${day.type === 'MidMonth' ? 'selected' : ''}>⭐ Mid-Month</option>
+                        <option value="Payday" ${day.type === 'Payday' ? 'selected' : ''}>💰 Payday</option>
+                    </select>
+                </td>
+
+                <!-- Daily % Modifier -->
+                <td class="py-1.5 px-2 bg-amber-50/20">
+                    <div class="flex items-center justify-center gap-0.5">
+                        <button
+                            type="button"
+                            onclick="stepPercentAdj(${day.date}, -5)"
+                            ${day.isCompleted ? 'disabled' : ''}
+                            class="w-4 h-6 flex items-center justify-center text-slate-400 hover:text-slate-800 bg-white hover:bg-slate-100 border border-slate-200 rounded text-[10px] font-black transition disabled:opacity-30 disabled:pointer-events-none"
+                            title="ลดงบ 5%"
+                        >−</button>
+                        <div class="relative flex items-center">
+                            <input
+                                type="number"
+                                id="percentAdj-${day.date}"
+                                value="${day.percentAdj || 100}"
+                                min="10"
+                                max="500"
+                                step="5"
+                                oninput="handlePercentAdjChange(${day.date}, this.value)"
+                                ${day.isCompleted ? 'disabled' : ''}
+                                class="w-14 bg-white border border-slate-200 focus:border-amber-500 focus:ring-1 focus:ring-amber-500 rounded px-1 py-0.5 text-center text-amber-800 font-extrabold text-[11px] disabled:bg-slate-50 disabled:text-slate-400"
+                            />
+                            <span class="text-[9px] font-bold text-slate-400 ml-0.5">%</span>
+                        </div>
+                        <button
+                            type="button"
+                            onclick="stepPercentAdj(${day.date}, 5)"
+                            ${day.isCompleted ? 'disabled' : ''}
+                            class="w-4 h-6 flex items-center justify-center text-slate-400 hover:text-slate-800 bg-white hover:bg-slate-100 border border-slate-200 rounded text-[10px] font-black transition disabled:opacity-30 disabled:pointer-events-none"
+                            title="เพิ่มงบ 5%"
+                        >+</button>
+                    </div>
+                    <div id="dayShare-${day.date}" class="text-[9px] text-slate-400 text-center mt-0.5 font-medium whitespace-nowrap">0% ของเดือน</div>
+                </td>
+
+                <!-- Shop Ads Target -->
+                <td class="py-1.5 px-2 bg-blue-50/10">
+                    <input
+                        type="number"
+                        id="shopTarget-${day.date}"
+                        value="${day.shopTarget}"
+                        oninput="handleCellChange(${day.date}, 'shopTarget', this.value)"
+                        ${day.isCompleted ? 'disabled' : ''}
+                        class="w-full bg-white border border-slate-200 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 rounded-lg px-2 py-0.5 text-right text-slate-800 font-semibold disabled:bg-slate-50 disabled:text-slate-500"
+                    />
+                    <div id="shopOrig-${day.date}" class="text-[10px] text-slate-400 text-right mt-0.5 pr-1 font-medium hidden"></div>
+                </td>
+
+                <!-- Shop Ads Actual Spent -->
+                <td class="py-1.5 px-2 bg-orange-50/10">
+                    <input
+                        type="number"
+                        id="shopActual-${day.date}"
+                        value="${day.shopActual === 0 ? '' : day.shopActual}"
+                        placeholder="0"
+                        oninput="handleCellChange(${day.date}, 'shopActual', this.value)"
+                        class="w-full bg-white border border-slate-300 focus:border-orange-500 focus:ring-1 focus:ring-orange-500 rounded-lg px-2 py-0.5 text-right text-orange-600 font-extrabold"
+                    />
+                </td>
+
+                <!-- Banner Target -->
+                <td class="py-1.5 px-2 bg-blue-50/10">
+                    <input
+                        type="number"
+                        id="bannerTarget-${day.date}"
+                        value="${day.bannerTarget}"
+                        oninput="handleCellChange(${day.date}, 'bannerTarget', this.value)"
+                        ${day.isCompleted ? 'disabled' : ''}
+                        class="w-full bg-white border border-slate-200 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 rounded-lg px-2 py-0.5 text-right text-slate-800 font-semibold disabled:bg-slate-50 disabled:text-slate-500"
+                    />
+                    <div id="bannerOrig-${day.date}" class="text-[10px] text-slate-400 text-right mt-0.5 pr-1 font-medium hidden"></div>
+                </td>
+
+                <!-- Banner Actual Spent -->
+                <td class="py-1.5 px-2 bg-orange-50/10">
+                    <input
+                        type="number"
+                        id="bannerActual-${day.date}"
+                        value="${day.bannerActual === 0 ? '' : day.bannerActual}"
+                        placeholder="0"
+                        oninput="handleCellChange(${day.date}, 'bannerActual', this.value)"
+                        class="w-full bg-white border border-slate-300 focus:border-orange-500 focus:ring-1 focus:ring-orange-500 rounded-lg px-2 py-0.5 text-right text-orange-600 font-extrabold"
+                    />
+                </td>
+
+                <!-- Total Target (Planned) -->
+                <td id="totalPlanned-${day.date}" class="py-2.5 px-3 text-right font-semibold text-slate-700 border-l border-slate-150 bg-slate-50/30">฿0</td>
+
+                <!-- Total Actual -->
+                <td id="totalActual-${day.date}" class="py-2.5 px-3 text-right font-bold text-slate-900 bg-slate-50/30">฿0</td>
+
+                <!-- Variance column -->
+                <td id="variance-${day.date}" class="py-2.5 px-3 text-right bg-slate-50/30 font-medium">--</td>
+
+                <!-- Status Button Toggle -->
+                <td class="py-2.5 px-3 text-center">
+                    <button
+                        id="statusBtn-${day.date}"
+                        onclick="toggleRowStatus(${day.date})"
+                        class="px-3 py-1 rounded-full text-[10px] font-bold tracking-wide transition-all"
+                    >
+                        ค้างบันทึก
+                    </button>
+                </td>
+            `;
+            tbody.appendChild(row);
+            updateRowUI(day.date);
+          });
+        }
+
+        // อัปเดตข้อมูลของแต่ละแถวในตารางโดยไม่รีสตาร์ท UI โฟกัส
+        function updateRowUI(date) {
+          const day = state.days.find(d => d.date === date);
+          if (!day) return;
+
+          const shopTargetInput = document.getElementById(`shopTarget-${date}`);
+          const shopActualInput = document.getElementById(`shopActual-${date}`);
+          const bannerTargetInput = document.getElementById(`bannerTarget-${date}`);
+          const bannerActualInput = document.getElementById(`bannerActual-${date}`);
+          const statusBtn = document.getElementById(`statusBtn-${date}`);
+          const selectType = document.getElementById(`selectType-${date}`);
+          const percentAdjInput = document.getElementById(`percentAdj-${date}`);
+          
+          if (!shopTargetInput) return;
+
+          // จัดสถานะ Disabled
+          shopTargetInput.disabled = day.isCompleted;
+          bannerTargetInput.disabled = day.isCompleted;
+          selectType.disabled = day.isCompleted;
+          if (percentAdjInput) {
+            percentAdjInput.disabled = day.isCompleted;
+            percentAdjInput.value = day.percentAdj || 100;
+          }
+
+          // อัปเดต Value จริง
+          shopTargetInput.value = day.shopTarget;
+          shopActualInput.value = day.shopActual === 0 ? '' : day.shopActual;
+          bannerTargetInput.value = day.bannerTarget;
+          bannerActualInput.value = day.bannerActual === 0 ? '' : day.bannerActual;
+
+          // แสดงแผนงบเดิมใต้กล่องป้อน
+          const shopOrigDiv = document.getElementById(`shopOrig-${date}`);
+          if (day.isCompleted && day.shopTarget !== day.originalShopTarget) {
+            shopOrigDiv.innerHTML = `แผนเดิม: ฿${day.originalShopTarget.toLocaleString()}`;
+            shopOrigDiv.classList.remove('hidden');
+          } else {
+            shopOrigDiv.classList.add('hidden');
+          }
+
+          const bannerOrigDiv = document.getElementById(`bannerOrig-${date}`);
+          if (day.isCompleted && day.bannerTarget !== day.originalBannerTarget) {
+            bannerOrigDiv.innerHTML = `แผนเดิม: ฿${day.originalBannerTarget.toLocaleString()}`;
+            bannerOrigDiv.classList.remove('hidden');
+          } else {
+            bannerOrigDiv.classList.add('hidden');
+          }
+
+          // ปรับปรุงธีมปุ่มสถานะ
+          if (day.isCompleted) {
+            statusBtn.className = "px-3 py-1 rounded-full text-[10px] font-bold tracking-wide transition-all bg-emerald-100 text-emerald-800 hover:bg-emerald-200";
+            statusBtn.innerHTML = "✓ บันทึกแล้ว";
+          } else {
+            statusBtn.className = "px-3 py-1 rounded-full text-[10px] font-bold tracking-wide transition-all bg-slate-100 text-slate-400 hover:text-slate-600 hover:bg-slate-200";
+            statusBtn.innerHTML = "ค้างบันทึก";
+          }
+        }
+
+        // ฟังก์ชันปรับค่า % รายวัน
+        function handlePercentAdjChange(date, value) {
+          const percent = Math.max(10, Math.min(500, parseInt(value, 10) || 100));
+          const day = state.days.find(d => d.date === date);
+          if (!day || day.isCompleted) return;
+
+          day.percentAdj = percent;
+          
+          // คำนวณยอดเป้าหมายตามฐานที่กำหนดไว้คูณด้วยอัตราส่วนเปอร์เซ็นต์
+          const baseShop = day.baseShopTarget !== undefined ? day.baseShopTarget : day.originalShopTarget;
+          const baseBanner = day.baseBannerTarget !== undefined ? day.baseBannerTarget : day.originalBannerTarget;
+
+          day.shopTarget = Math.round(baseShop * (percent / 100));
+          day.originalShopTarget = day.shopTarget;
+
+          day.bannerTarget = Math.round(baseBanner * (percent / 100));
+          day.originalBannerTarget = day.bannerTarget;
+
+          updateRowUI(date);
+          saveStateToStorage();
+          recalculate();
+        }
+
+        // ปุ่มเพิ่ม/ลด % ทีละขั้น
+        function stepPercentAdj(date, step) {
+          const day = state.days.find(d => d.date === date);
+          if (!day || day.isCompleted) return;
+
+          const current = day.percentAdj || 100;
+          const nextVal = Math.max(10, Math.min(500, current + step));
+          handlePercentAdjChange(date, nextVal);
+        }
+
+        // ระบบปรับสัดส่วน % งบด่วนทั้งกลุ่ม (Bulk % Scaler)
+        function applyBulkScale() {
+          const target = document.getElementById('bulk-scale-target').value;
+          const percentVal = Math.max(10, Math.min(500, parseInt(document.getElementById('bulk-scale-percent').value, 10) || 100));
+
+          state.days.forEach(day => {
+            if (day.isCompleted) return;
+
+            let shouldApply = false;
+            if (target === 'remaining') {
+              shouldApply = true;
+            } else if (day.type === target) {
+              shouldApply = true;
+            }
+
+            if (shouldApply) {
+              day.percentAdj = percentVal;
+              const baseShop = day.baseShopTarget !== undefined ? day.baseShopTarget : day.originalShopTarget;
+              const baseBanner = day.baseBannerTarget !== undefined ? day.baseBannerTarget : day.originalBannerTarget;
+
+              day.shopTarget = Math.round(baseShop * (percentVal / 100));
+              day.originalShopTarget = day.shopTarget;
+
+              day.bannerTarget = Math.round(baseBanner * (percentVal / 100));
+              day.originalBannerTarget = day.bannerTarget;
+            }
+          });
+
+          saveStateToStorage();
+          initTableHTML();
+          recalculate();
+        }
+
+        // อัปเดตประเภทวันเดี่ยว
+        function updateRowType(date, type) {
+          const day = state.days.find(d => d.date === date);
+          if (day) {
+            day.type = type;
+            saveStateToStorage();
+            initTableHTML(); // รีเฟรชสีพื้นหลังแถว
+            recalculate();
+          }
+        }
+
+        // ควบคุมเหตุการณ์กรอกตัวเลข
+        function handleCellChange(date, field, value) {
+          const numericValue = value === '' ? 0 : Math.max(0, parseInt(value, 10) || 0);
+          const day = state.days.find(d => d.date === date);
+          if (!day) return;
+
+          day[field] = numericValue;
+          
+          if (field === 'shopTarget') {
+            day.originalShopTarget = numericValue;
+            day.baseShopTarget = numericValue;
+            day.percentAdj = 100; // รีเซ็ต % เป็น 100% ฐานใหม่เมื่อกรอกยอดด้วยตนเอง
+          }
+          if (field === 'bannerTarget') {
+            day.originalBannerTarget = numericValue;
+            day.baseBannerTarget = numericValue;
+            day.percentAdj = 100; // รีเซ็ต % เป็น 100% ฐานใหม่เมื่อกรอกยอดด้วยตนเอง
+          }
+
+          // ตรวจสอบและเกลี่ยงบอัตโนมัติเมื่อป้อน Actual Spent
+          if (field === 'shopActual' || field === 'bannerActual') {
+            const hasActualSpent = (day.shopActual > 0 || day.bannerActual > 0 || (field === 'shopActual' && value !== '') || (field === 'bannerActual' && value !== ''));
+            day.isCompleted = hasActualSpent;
+            
+            if (day.isCompleted) {
+              // ซิงค์เป้าหมาย Target ให้เท่ากับยอดใช้จริง แม้ค่าจะเป็น 0 (ตรงตามที่ลูกค้าระบุ)
+              day.shopTarget = day.shopActual;
+              day.bannerTarget = day.bannerActual;
+            } else {
+              day.shopTarget = day.originalShopTarget;
+              day.bannerTarget = day.originalBannerTarget;
+            }
+          }
+
+          updateRowUI(date);
+          saveStateToStorage();
+          recalculate();
+        }
+
+        // เปลี่ยนสถานะบันทึกผลทางปุ่มสถานะ
+        function toggleRowStatus(date) {
+          const day = state.days.find(d => d.date === date);
+          if (!day) return;
+
+          day.isCompleted = !day.isCompleted;
+          if (day.isCompleted) {
+            day.shopTarget = day.shopActual;
+            day.bannerTarget = day.bannerActual;
+          } else {
+            day.shopTarget = day.originalShopTarget;
+            day.bannerTarget = day.originalBannerTarget;
+          }
+
+          updateRowUI(date);
+          saveStateToStorage();
+          recalculate();
+        }
+
+        // ระบบแจกจ่ายงบด่วน (Smart Preset Allocator)
+        function applyPresetToSelectedTypes(type) {
+          state.days.forEach(day => {
+            if (day.type === type && !day.isCompleted) {
+              let shopTarget = day.shopTarget;
+              let bannerTarget = day.bannerTarget;
+              
+              if (type === 'D-Day') {
+                shopTarget = state.presets.ddayShop;
+                bannerTarget = state.presets.ddayBanner;
+              } else if (type === 'MidMonth') {
+                shopTarget = state.presets.midMonthShop;
+                bannerTarget = state.presets.midMonthBanner;
+              } else if (type === 'Payday') {
+                shopTarget = state.presets.paydayShop;
+                bannerTarget = state.presets.paydayBanner;
+              } else {
+                shopTarget = state.presets.normalShop;
+                bannerTarget = state.presets.normalBanner;
+              }
+
+              day.baseShopTarget = shopTarget;
+              day.baseBannerTarget = bannerTarget;
+              const ratio = (day.percentAdj || 100) / 100;
+              const finalShop = Math.round(shopTarget * ratio);
+              const finalBanner = Math.round(bannerTarget * ratio);
+
+              day.shopTarget = finalShop;
+              day.originalShopTarget = finalShop;
+              day.bannerTarget = finalBanner;
+              day.originalBannerTarget = finalBanner;
+            }
+          });
+          saveStateToStorage();
+          initTableHTML();
+          recalculate();
+        }
+
+        function applyAllPresets() {
+          state.days.forEach(day => {
+            if (!day.isCompleted) {
+              let shopTarget = state.presets.normalShop;
+              let bannerTarget = state.presets.normalBanner;
+              
+              if (day.type === 'D-Day') {
+                shopTarget = state.presets.ddayShop;
+                bannerTarget = state.presets.ddayBanner;
+              } else if (day.type === 'MidMonth') {
+                shopTarget = state.presets.midMonthShop;
+                bannerTarget = state.presets.midMonthBanner;
+              } else if (day.type === 'Payday') {
+                shopTarget = state.presets.paydayShop;
+                bannerTarget = state.presets.paydayBanner;
+              }
+
+              day.baseShopTarget = shopTarget;
+              day.baseBannerTarget = bannerTarget;
+              const ratio = (day.percentAdj || 100) / 100;
+              const finalShop = Math.round(shopTarget * ratio);
+              const finalBanner = Math.round(bannerTarget * ratio);
+
+              day.shopTarget = finalShop;
+              day.originalShopTarget = finalShop;
+              day.bannerTarget = finalBanner;
+              day.originalBannerTarget = finalBanner;
+            }
+          });
+          saveStateToStorage();
+          initTableHTML();
+          recalculate();
+        }
+
+        // ระบบคำนวณและอัปเดต Dashboard
+        function recalculate() {
+          let totalShopTarget = 0;
+          let totalShopActual = 0;
+          let totalBannerTarget = 0;
+          let totalBannerActual = 0;
+          let completedDaysCount = 0;
+          const count = getDaysCountInMonth(state.selectedMonth);
+
+          state.days.forEach(day => {
+            totalShopTarget += day.shopTarget;
+            totalBannerTarget += day.bannerTarget;
+            
+            // สรุปยอดผลรวมแถว
+            const dayTotalTarget = day.shopTarget + day.bannerTarget;
+            const dayTotalActual = day.shopActual + day.bannerActual;
+            
+            const totalPlannedEl = document.getElementById(`totalPlanned-${day.date}`);
+            const totalActualEl = document.getElementById(`totalActual-${day.date}`);
+            if (totalPlannedEl) totalPlannedEl.innerHTML = `฿${dayTotalTarget.toLocaleString()}`;
+            if (totalActualEl) totalActualEl.innerHTML = day.isCompleted ? `฿${dayTotalActual.toLocaleString()}` : '฿0';
+            
+            const originalDayTotalTarget = day.originalShopTarget + day.originalBannerTarget;
+            const variance = day.isCompleted ? (dayTotalActual - originalDayTotalTarget) : 0;
+            const varianceCell = document.getElementById(`variance-${day.date}`);
+            
+            if (day.isCompleted) {
+              totalShopActual += day.shopActual;
+              totalBannerActual += day.bannerActual;
+              completedDaysCount++;
+              
+              if (varianceCell) {
+                if (variance === 0) {
+                  varianceCell.innerHTML = `<span class="text-slate-400 font-medium">สอดคล้องเป้า</span>`;
+                } else if (variance < 0) {
+                  varianceCell.innerHTML = `<span class="text-emerald-600 font-bold">-${Math.abs(variance).toLocaleString()} (ประหยัดแอด)</span>`;
+                } else {
+                  varianceCell.innerHTML = `<span class="text-rose-600 font-bold">+${variance.toLocaleString()} (แอดล้นแผน)</span>`;
+                }
+              }
+            } else {
+              if (varianceCell) varianceCell.innerHTML = `<span class="text-slate-400 font-light">-</span>`;
+            }
+          });
+
+          // ตัวแปรส่วนรวม
+          const totalTarget = totalShopTarget + totalBannerTarget;
+          const totalActual = totalShopActual + totalBannerActual;
+          const spentPercent = totalTarget > 0 ? (totalActual / totalTarget) * 100 : 0;
+          const remainingBudget = Math.max(0, totalTarget - totalActual);
+          const remainingDaysCount = count - completedDaysCount;
+
+          // อัปเดตสัดส่วน % ของแต่ละวันต่องบทั้งเดือน
+          state.days.forEach(day => {
+            const dayTotalTarget = day.shopTarget + day.bannerTarget;
+            const dayShareEl = document.getElementById(`dayShare-${day.date}`);
+            if (dayShareEl) {
+              const share = totalTarget > 0 ? ((dayTotalTarget / totalTarget) * 100).toFixed(1) : 0;
+              dayShareEl.innerText = `${share}% ของเดือน`;
+            }
+          });
+
+          let cumulativeOriginalPlannedSoFar = 0;
+          state.days.forEach(day => {
+            if (day.isCompleted) {
+              cumulativeOriginalPlannedSoFar += (day.originalShopTarget + day.originalBannerTarget);
+            }
+          });
+
+          const pacingGap = cumulativeOriginalPlannedSoFar - totalActual;
+          const recommendedDailySpend = remainingDaysCount > 0 ? remainingBudget / remainingDaysCount : 0;
+
+          // อัปเดตตัวเลขการคำนวณบน Dashboard Card
+          document.getElementById('calc-total-target').innerHTML = `฿${totalTarget.toLocaleString()}`;
+          document.getElementById('calc-shop-target-sub').innerHTML = `Shop: ฿${totalShopTarget.toLocaleString()}`;
+          document.getElementById('calc-banner-target-sub').innerHTML = `Banner: ฿${totalBannerTarget.toLocaleString()}`;
+          
+          document.getElementById('calc-total-actual').innerHTML = `฿${totalActual.toLocaleString()}`;
+          document.getElementById('calc-spent-percent').innerHTML = `${spentPercent.toFixed(1)}%`;
+          document.getElementById('calc-spent-progress').style.width = `${Math.min(100, spentPercent)}%`;
+          
+          document.getElementById('calc-remaining-budget').innerHTML = `฿${remainingBudget.toLocaleString()}`;
+          document.getElementById('calc-completed-days').innerHTML = `บันทึกแล้ว ${completedDaysCount} จาก ${count} วัน`;
+
+          // งบประหยัดสะสม (Roll-Over)
+          const pacingGapEl = document.getElementById('calc-pacing-gap');
+          const pacingDescEl = document.getElementById('calc-pacing-gap-desc');
+          pacingGapEl.innerHTML = `${pacingGap >= 0 ? '+' : ''}฿${pacingGap.toLocaleString()}`;
+          if (pacingGap >= 0) {
+            pacingGapEl.className = "text-xl font-extrabold text-purple-600";
+            pacingDescEl.innerHTML = `
+                <svg class="w-2.5 h-2.5 text-purple-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
+                <span>ใช้น้อยกว่าเป้า เกลี่ยไปวันอื่น</span>`;
+          } else {
+            pacingGapEl.className = "text-xl font-extrabold text-rose-600";
+            pacingDescEl.innerHTML = `
+                <svg class="w-2.5 h-2.5 text-rose-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
+                <span>ใช้เงินจริงแอดล้นแผน</span>`;
+          }
+
+          // เฉลี่ยงบรายวันที่เหลือ (แนะนำ)
+          document.getElementById('calc-recommended-spend').innerHTML = `฿${Math.round(recommendedDailySpend).toLocaleString()} <span class="text-[10px] font-normal text-slate-500">/ วัน</span>`;
+          document.getElementById('calc-remaining-days').innerHTML = `เฉลี่ยโควตาสำหรับ ${remainingDaysCount} วันที่เหลือ`;
+
+          // อัปเดตส่วนท้ายสุดตาราง (Footer Summary)
+          document.getElementById('foot-shop-target').innerHTML = `฿${totalShopTarget.toLocaleString()}`;
+          document.getElementById('foot-shop-actual').innerHTML = `฿${totalShopActual.toLocaleString()}`;
+          document.getElementById('foot-banner-target').innerHTML = `฿${totalBannerTarget.toLocaleString()}`;
+          document.getElementById('foot-banner-actual').innerHTML = `฿${totalBannerActual.toLocaleString()}`;
+          document.getElementById('foot-total-target').innerHTML = `฿${totalTarget.toLocaleString()}`;
+          document.getElementById('foot-total-actual').innerHTML = `฿${totalActual.toLocaleString()}`;
+          
+          if (pacingGap >= 0) {
+            document.getElementById('foot-variance').innerHTML = `<span class="text-purple-700">งบส่วนต่างบวก: ฿${pacingGap.toLocaleString()}</span>`;
+          } else {
+            document.getElementById('foot-variance').innerHTML = `<span class="text-rose-700">งบส่วนต่างลบ: ฿${Math.abs(pacingGap).toLocaleString()}</span>`;
+          }
+        }
+
+        // ==========================================
+        // ระบบจัดการเซฟแคมเปญ / แผน (Plan System)
+        // ==========================================
+        let planIdToDelete = null;
+        let planIdToRename = null;
+
+        function renderPlanChips() {
+          const container = document.getElementById('plans-container');
+          container.innerHTML = '';
+          
+          state.plans.forEach(plan => {
+            const isActive = plan.id === state.selectedPlanId;
+            const chip = document.createElement('div');
+            chip.className = `group relative pl-3 pr-2 py-1.5 rounded-xl border transition-all duration-150 flex items-center gap-2 text-xs ${
+              isActive 
+                ? 'bg-orange-100 border-orange-400 ring-1 ring-orange-500/20 font-bold text-orange-950 shadow-sm' 
+                : 'bg-slate-50 border-slate-200 hover:bg-slate-100 text-slate-600'
+            }`;
+            
+            chip.innerHTML = `
+              <button onclick="loadPlan('${plan.id}')" class="truncate max-w-[160px] text-left font-semibold" title="${plan.name}">
+                ${isActive ? '➔ ' : ''}${plan.name}
               </button>
-            </div>
-          </div>
-        `;
-      }).join('');
-    }
-
-    function renderChannels() {
-      const plan = getPlan();
-      const el = document.getElementById('channelList');
-      el.innerHTML = plan.channels.map(ch => `
-        <div class="flex items-center gap-1 bg-white border border-slate-200 rounded-xl px-2 py-1">
-          <input type="text" class="text-sm font-medium border-0 focus:ring-0 w-28"
-            value="${escapeHtml(ch.name)}"
-            onchange="renameChannel('${ch.id}', this.value)" />
-          <button onclick="removeChannel('${ch.id}')" class="text-red-400 hover:text-red-600 text-xs px-1" title="ลบช่อง">✕</button>
-        </div>
-      `).join('');
-    }
-
-    function renderSummary() {
-      const plan = getPlan();
-      const channels = plan.channels;
-      let totalTarget = 0, totalActual = 0;
-      const byChTarget = {}, byChActual = {};
-      channels.forEach(c => { byChTarget[c.id] = 0; byChActual[c.id] = 0; });
-
-      plan.days.forEach(day => {
-        channels.forEach(c => {
-          const t = Number(day.targets[c.id]) || 0;
-          const a = Number(day.actuals[c.id]) || 0;
-          byChTarget[c.id] += t;
-          byChActual[c.id] += a;
-          totalTarget += t;
-          totalActual += a;
-        });
-      });
-
-      const remaining = totalTarget - totalActual;
-      const pct = totalTarget > 0 ? (totalActual / totalTarget * 100) : 0;
-      const savedDays = plan.days.filter(d => d.saved).length;
-      const remainingDays = plan.days.length - savedDays;
-      let rollover = 0;
-      plan.days.forEach(day => {
-        if (!day.saved) return;
-        channels.forEach(c => {
-          const t = Number(day.targets[c.id]) || 0;
-          const a = Number(day.actuals[c.id]) || 0;
-          if (a < t) rollover += (t - a);
-        });
-      });
-      const avgRemain = remainingDays > 0 ? Math.round(remaining / remainingDays) : 0;
-
-      const cards = [
-        { label: 'งบประมาณตามแผน', value: money(totalTarget), sub: channels.map(c => `${c.name}: ${money(byChTarget[c.id])}`).join(' • '), color: 'slate' },
-        { label: 'ใช้จริงสะสม', value: money(totalActual), sub: pct.toFixed(1) + '% • บันทึกแล้ว ' + savedDays + '/' + plan.days.length + ' วัน', color: 'orange' },
-        { label: 'งบเหลือ', value: money(remaining), sub: remaining >= 0 ? 'ยังใช้ได้อยู่' : 'เกินงบแล้ว', color: remaining >= 0 ? 'emerald' : 'rose' },
-        { label: 'งบประหยัด (Roll-over)', value: money(rollover), sub: 'จากวันที่ใช้น้อยกว่าเป้า', color: 'violet' },
-        { label: 'เฉลี่ยงบที่เหลือ', value: money(avgRemain) + ' /วัน', sub: remainingDays + ' วันที่เหลือ', color: 'amber' }
-      ];
-
-      document.getElementById('summaryCards').innerHTML = cards.map(c => `
-        <div class="card p-3">
-          <div class="text-[11px] text-slate-500 font-medium">${c.label}</div>
-          <div class="text-lg font-bold text-${c.color}-700 mt-0.5">${c.value}</div>
-          <div class="text-[10px] text-slate-400 mt-1 leading-tight">${c.sub}</div>
-        </div>
-      `).join('');
-    }
-
-    function renderTable() {
-      const plan = getPlan();
-      const channels = plan.channels;
-
-      let head = `<tr>
-        <th class="py-2 px-2 text-center w-10">วัน</th>
-        <th class="py-2 px-2 text-left min-w-[110px]">ประเภท</th>`;
-      channels.forEach(c => {
-        head += `<th class="py-2 px-2 text-right bg-blue-50/40">${escapeHtml(c.name)} เป้า</th>`;
-        head += `<th class="py-2 px-2 text-right bg-orange-50/40">${escapeHtml(c.name)} ใช้จริง</th>`;
-      });
-      head += `<th class="py-2 px-2 text-right font-bold">รวมเป้า</th>
-               <th class="py-2 px-2 text-right font-bold">รวมใช้จริง</th>
-               <th class="py-2 px-2 text-right">ส่วนต่าง</th>
-               <th class="py-2 px-2 text-left min-w-[100px]">หมายเหตุ</th>
-               <th class="py-2 px-2 text-center">บันทึก</th>
-             </tr>`;
-      document.getElementById('tableHead').innerHTML = head;
-
-      let body = '';
-      plan.days.forEach((day, idx) => {
-        const type = plan.dayTypes.find(t => t.id === day.typeId) || plan.dayTypes[0];
-        let rowTarget = 0, rowActual = 0;
-        let cells = '';
-        channels.forEach(c => {
-          const t = Number(day.targets[c.id]) || 0;
-          const a = Number(day.actuals[c.id]) || 0;
-          rowTarget += t; rowActual += a;
-          cells += `<td class="py-1 px-1"><input type="number" class="input-num editable w-20 text-right text-xs border border-transparent hover:border-slate-200 rounded px-1 py-0.5 bg-blue-50/30"
-            value="${t}" onchange="setTarget(${idx}, '${c.id}', this.value)" /></td>`;
-          cells += `<td class="py-1 px-1"><input type="number" class="input-num editable w-20 text-right text-xs border border-transparent hover:border-slate-200 rounded px-1 py-0.5 bg-orange-50/30"
-            value="${a}" onchange="setActual(${idx}, '${c.id}', this.value)" /></td>`;
-        });
-        const variance = rowTarget - rowActual;
-        const varClass = variance > 0 ? 'text-emerald-600' : variance < 0 ? 'text-rose-600' : 'text-slate-500';
-        const varText = variance > 0 ? `+${money(variance)}` : variance < 0 ? money(variance) : '—';
-
-        const typeOptions = plan.dayTypes.map(t =>
-          `<option value="${t.id}" ${t.id === day.typeId ? 'selected' : ''}>${escapeHtml(t.name)}</option>`
-        ).join('');
-
-        body += `<tr class="border-t border-slate-100 hover:bg-slate-50/80 ${day.saved ? 'bg-emerald-50/30' : ''}">
-          <td class="py-1 px-2 text-center font-medium text-slate-600">${day.day}</td>
-          <td class="py-1 px-1">
-            <select class="text-xs border rounded-lg px-1 py-0.5 w-full max-w-[120px]"
-              onchange="setDayType(${idx}, this.value)">${typeOptions}</select>
-          </td>
-          ${cells}
-          <td class="py-1 px-2 text-right font-semibold">${money(rowTarget)}</td>
-          <td class="py-1 px-2 text-right font-semibold">${money(rowActual)}</td>
-          <td class="py-1 px-2 text-right text-xs ${varClass}">${varText}</td>
-          <td class="py-1 px-1">
-            <input type="text" class="editable w-full text-xs border border-transparent hover:border-slate-200 rounded px-1 py-0.5"
-              value="${escapeHtml(day.note || '')}" placeholder="หมายเหตุ"
-              onchange="setNote(${idx}, this.value)" />
-          </td>
-          <td class="py-1 px-2 text-center">
-            <button onclick="toggleSaved(${idx})"
-              class="text-xs px-2 py-0.5 rounded-lg font-medium ${day.saved ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-500 hover:bg-slate-200'}">
-              ${day.saved ? '✓ แล้ว' : 'บันทึก'}
-            </button>
-          </td>
-        </tr>`;
-      });
-      document.getElementById('tableBody').innerHTML = body;
-
-      let footTarget = 0, footActual = 0;
-      const footByChT = {}, footByChA = {};
-      channels.forEach(c => { footByChT[c.id] = 0; footByChA[c.id] = 0; });
-      plan.days.forEach(day => {
-        channels.forEach(c => {
-          footByChT[c.id] += Number(day.targets[c.id]) || 0;
-          footByChA[c.id] += Number(day.actuals[c.id]) || 0;
-        });
-      });
-      channels.forEach(c => { footTarget += footByChT[c.id]; footActual += footByChA[c.id]; });
-      const footVar = footTarget - footActual;
-
-      let footCells = '';
-      channels.forEach(c => {
-        footCells += `<td class="py-2 px-2 text-right">${money(footByChT[c.id])}</td>`;
-        footCells += `<td class="py-2 px-2 text-right">${money(footByChA[c.id])}</td>`;
-      });
-
-      document.getElementById('tableFoot').innerHTML = `
-        <tr class="border-t-2 border-slate-200">
-          <td class="py-2 px-2 text-center" colspan="2">รวม</td>
-          ${footCells}
-          <td class="py-2 px-2 text-right">${money(footTarget)}</td>
-          <td class="py-2 px-2 text-right">${money(footActual)}</td>
-          <td class="py-2 px-2 text-right ${footVar >= 0 ? 'text-emerald-600' : 'text-rose-600'}">${footVar >= 0 ? '+' : ''}${money(footVar)}</td>
-          <td colspan="2"></td>
-        </tr>`;
-    }
-
-    function escapeHtml(str) {
-      return String(str || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-    }
-
-    // ===================== ACTIONS =====================
-    function switchPlan(id) {
-      state.currentPlanId = id;
-      save(); renderAll();
-    }
-    function createPlan() {
-      const name = prompt('ชื่อแผนใหม่:', 'แผนใหม่ ' + currentYM());
-      if (!name) return;
-      const plan = makePlan(name, currentYM());
-      state.plans.push(plan);
-      state.currentPlanId = plan.id;
-      save(); renderAll();
-    }
-    function renameCurrentPlan() {
-      const plan = getPlan();
-      const name = prompt('ชื่อแผนใหม่:', plan.name);
-      if (!name) return;
-      plan.name = name.trim();
-      save(); renderPlans();
-    }
-    function deleteCurrentPlan() {
-      if (state.plans.length <= 1) { alert('ต้องมีอย่างน้อย 1 แผน'); return; }
-      if (!confirm('ลบแผนนี้จริงหรือ?')) return;
-      state.plans = state.plans.filter(p => p.id !== state.currentPlanId);
-      state.currentPlanId = state.plans[0].id;
-      save(); renderAll();
-    }
-
-    function addDayType() {
-      const plan = getPlan();
-      const name = prompt('ชื่อประเภทวัน:', 'ประเภทใหม่');
-      if (!name) return;
-      const id = uid();
-      const defaults = {};
-      plan.channels.forEach(c => defaults[c.id] = 0);
-      plan.dayTypes.push({ id, name: name.trim(), color: 'slate', defaults });
-      save(); renderDayTypes();
-    }
-    function renameDayType(id, name) {
-      const plan = getPlan();
-      const dt = plan.dayTypes.find(t => t.id === id);
-      if (dt) { dt.name = name.trim() || dt.name; save(); renderTable(); }
-    }
-    function updateDayTypeDefault(typeId, chId, val) {
-      const plan = getPlan();
-      const dt = plan.dayTypes.find(t => t.id === typeId);
-      if (dt) {
-        dt.defaults[chId] = Number(val) || 0;
-        save();
-        renderDayTypes();
-      }
-    }
-    function removeDayType(id) {
-      const plan = getPlan();
-      if (plan.dayTypes.length <= 1) { alert('ต้องมีอย่างน้อย 1 ประเภท'); return; }
-      if (!confirm('ลบประเภทนี้? วันที่ใช้ประเภทนี้อยู่จะถูกเปลี่ยนเป็นประเภทแรก')) return;
-      plan.dayTypes = plan.dayTypes.filter(t => t.id !== id);
-      const fallback = plan.dayTypes[0].id;
-      plan.days.forEach(d => { if (d.typeId === id) d.typeId = fallback; });
-      save(); renderDayTypes(); renderTable();
-    }
-
-    function addChannel() {
-      const plan = getPlan();
-      const name = prompt('ชื่อช่องโฆษณา:', 'ช่องใหม่');
-      if (!name) return;
-      const id = uid();
-      plan.channels.push({ id, name: name.trim(), color: 'slate' });
-      plan.days.forEach(d => {
-        d.targets[id] = 0;
-        d.actuals[id] = 0;
-      });
-      plan.dayTypes.forEach(dt => { dt.defaults[id] = 0; });
-      save(); renderChannels(); renderDayTypes(); renderTable(); renderSummary();
-    }
-    function renameChannel(id, name) {
-      const plan = getPlan();
-      const ch = plan.channels.find(c => c.id === id);
-      if (ch) { ch.name = name.trim() || ch.name; save(); renderChannels(); renderTable(); renderSummary(); }
-    }
-    function removeChannel(id) {
-      const plan = getPlan();
-      if (plan.channels.length <= 1) { alert('ต้องมีอย่างน้อย 1 ช่อง'); return; }
-      if (!confirm('ลบช่องนี้? ข้อมูลเป้าและยอดใช้จริงของช่องนี้จะหาย')) return;
-      plan.channels = plan.channels.filter(c => c.id !== id);
-      plan.days.forEach(d => { delete d.targets[id]; delete d.actuals[id]; });
-      plan.dayTypes.forEach(dt => { delete dt.defaults[id]; });
-      save(); renderChannels(); renderDayTypes(); renderTable(); renderSummary();
-    }
-
-    function setTarget(idx, chId, val) {
-      getPlan().days[idx].targets[chId] = Number(val) || 0;
-      save(); renderTable(); renderSummary();
-    }
-    function setActual(idx, chId, val) {
-      getPlan().days[idx].actuals[chId] = Number(val) || 0;
-      save(); renderTable(); renderSummary();
-    }
-    function setDayType(idx, typeId) {
-      const plan = getPlan();
-      const day = plan.days[idx];
-      day.typeId = typeId;
-      const allZero = plan.channels.every(c => !Number(day.targets[c.id]));
-      if (allZero) {
-        const dt = plan.dayTypes.find(t => t.id === typeId);
-        if (dt) {
-          plan.channels.forEach(c => {
-            day.targets[c.id] = Number(dt.defaults[c.id]) || 0;
+              <div class="flex items-center gap-0.5 opacity-65 group-hover:opacity-100 transition-opacity">
+                <button onclick="openRenameModal('${plan.id}')" class="p-0.5 hover:text-slate-950 rounded hover:bg-slate-200/60" title="แก้ไขชื่อแผน">
+                  <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
+                </button>
+                <button onclick="openDeleteModal('${plan.id}')" class="p-0.5 hover:text-red-600 rounded hover:bg-red-50" title="ลบแผนนี้">
+                  <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                </button>
+              </div>
+            `;
+            container.appendChild(chip);
           });
         }
-      }
-      save();
-      renderTable();
-      renderSummary();
-      renderDayTypes();
-    }
-    function setNote(idx, val) {
-      getPlan().days[idx].note = val;
-      save();
-    }
-    function toggleSaved(idx) {
-      const plan = getPlan();
-      plan.days[idx].saved = !plan.days[idx].saved;
-      save(); renderTable(); renderSummary();
-    }
 
-    function getDistMode() {
-      const checked = document.querySelector('input[name="distMode"]:checked');
-      return checked ? checked.value : 'empty';
-    }
-
-    function shouldApplyToDay(day, mode) {
-      if (mode === 'all') return true;
-      if (mode === 'unsaved') return !day.saved;
-      const plan = getPlan();
-      return plan.channels.every(c => !Number(day.targets[c.id]));
-    }
-
-    function distributePresets() {
-      const plan = getPlan();
-      const mode = getDistMode();
-      let count = 0;
-      plan.days.forEach(day => {
-        if (!shouldApplyToDay(day, mode)) return;
-        const dt = plan.dayTypes.find(t => t.id === day.typeId);
-        if (!dt) return;
-        plan.channels.forEach(c => {
-          day.targets[c.id] = Number(dt.defaults[c.id]) || 0;
-        });
-        count++;
-      });
-      save(); renderTable(); renderSummary(); renderDayTypes();
-      const modeText = { empty: 'วันที่ยังไม่มีเป้า', unsaved: 'วันที่ยังไม่บันทึก', all: 'ทุกวัน' }[mode];
-      alert(`กระจายงบเรียบร้อย\nอัปเดต ${count} วัน (${modeText})\nงบถูกใส่ตามประเภทวันของแต่ละวัน`);
-    }
-
-    function applyDayTypeToMatching(typeId) {
-      const plan = getPlan();
-      const dt = plan.dayTypes.find(t => t.id === typeId);
-      if (!dt) return;
-      const mode = getDistMode();
-      let count = 0;
-      plan.days.forEach(day => {
-        if (day.typeId !== typeId) return;
-        if (!shouldApplyToDay(day, mode)) return;
-        plan.channels.forEach(c => {
-          day.targets[c.id] = Number(dt.defaults[c.id]) || 0;
-        });
-        count++;
-      });
-      save(); renderTable(); renderSummary(); renderDayTypes();
-      alert(`ใส่งบของ「${dt.name}」ลง ${count} วันเรียบร้อย`);
-    }
-
-    function distributePresetsByType() {
-      alert('กดปุ่ม「ใช้กับวันที่เป็นประเภทนี้」ในกล่องประเภทวันแต่ละอันได้เลยครับ\nระบบจะกระจายเฉพาะวันที่ตรงกับประเภทนั้น');
-    }
-
-    function fillRemainingFromAvg() {
-      const plan = getPlan();
-      const channels = plan.channels;
-      let totalTarget = 0, totalActual = 0;
-      plan.days.forEach(day => {
-        channels.forEach(c => {
-          totalTarget += Number(day.targets[c.id]) || 0;
-          totalActual += Number(day.actuals[c.id]) || 0;
-        });
-      });
-      const remaining = totalTarget - totalActual;
-      const remainingDays = plan.days.filter(d => !d.saved).length;
-      if (remainingDays === 0) { alert('ไม่มีวันที่เหลือ'); return; }
-      if (!confirm(`จะเฉลี่ยงบที่เหลือ ${money(remaining)} ไปยัง ${remainingDays} วันที่ยังไม่บันทึก ใช่ไหม?\n(จะทับเป้าเดิมของวันที่ยังไม่บันทึก)`)) return;
-
-      let sumTargetRemain = 0;
-      plan.days.forEach(d => {
-        if (d.saved) return;
-        channels.forEach(c => sumTargetRemain += Number(d.targets[c.id]) || 0);
-      });
-
-      if (sumTargetRemain <= 0) {
-        const perDay = Math.round(remaining / remainingDays);
-        const perCh = Math.round(perDay / channels.length);
-        plan.days.forEach(d => {
-          if (d.saved) return;
-          channels.forEach(c => { d.targets[c.id] = perCh; });
-        });
-      } else {
-        const scale = remaining / sumTargetRemain;
-        plan.days.forEach(d => {
-          if (d.saved) return;
-          channels.forEach(c => {
-            d.targets[c.id] = Math.round((Number(d.targets[c.id]) || 0) * scale);
-          });
-        });
-      }
-      save(); renderTable(); renderSummary();
-    }
-
-    function clearActuals() {
-      if (!confirm('ล้างยอดใช้จริงทั้งหมดของแผนนี้?')) return;
-      const plan = getPlan();
-      plan.days.forEach(d => {
-        plan.channels.forEach(c => { d.actuals[c.id] = 0; });
-        d.saved = false;
-      });
-      save(); renderTable(); renderSummary();
-    }
-
-    function exportJSON() {
-      const data = JSON.stringify(state, null, 2);
-      const blob = new Blob([data], { type: 'application/json' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = 'shopee-ad-budget-' + currentYM() + '.json';
-      a.click();
-      URL.revokeObjectURL(url);
-    }
-    function importJSON(ev) {
-      const file = ev.target.files[0];
-      if (!file) return;
-      const reader = new FileReader();
-      reader.onload = e => {
-        try {
-          const data = JSON.parse(e.target.result);
-          if (!data.plans || !Array.isArray(data.plans)) throw new Error('รูปแบบไม่ถูกต้อง');
-          if (!confirm('นำเข้าจะแทนที่ข้อมูลทั้งหมดในเครื่อง ยืนยัน?')) return;
-          state = data;
-          if (!state.currentPlanId && state.plans[0]) state.currentPlanId = state.plans[0].id;
-          save(); renderAll();
-          alert('นำเข้าสำเร็จ');
-        } catch (err) {
-          alert('ไฟล์ไม่ถูกต้อง: ' + err.message);
+        function loadPlan(planId) {
+          const selectedPlan = state.plans.find(p => p.id === planId);
+          if (selectedPlan) {
+            state.selectedPlanId = planId;
+            state.selectedMonth = selectedPlan.month;
+            state.presets = { ...selectedPlan.presets };
+            state.days = JSON.parse(JSON.stringify(selectedPlan.days));
+            
+            document.getElementById('month-selector').value = selectedPlan.month;
+            
+            saveStateToStorage();
+            syncPresetFormInputs();
+            initTableHTML();
+            renderPlanChips();
+            recalculate();
+          }
         }
-      };
-      reader.readAsText(file);
-      ev.target.value = '';
-    }
 
-    // ===================== INIT =====================
-    load();
-    renderAll();
-  </script>
+        function quickSaveCurrentPlan() {
+          state.plans = state.plans.map(p => {
+            if (p.id === state.selectedPlanId) {
+              return {
+                ...p,
+                month: state.selectedMonth,
+                presets: { ...state.presets },
+                days: JSON.parse(JSON.stringify(state.days))
+              };
+            }
+            return p;
+          });
+          saveStateToStorage();
+          renderPlanChips();
+        }
+
+        // เซฟปัจจุบันแบบมีอนิเมชันให้ผู้ใช้เห็นสถานะความสำเร็จ
+        function triggerManualSave() {
+          quickSaveCurrentPlan();
+          
+          const btn = document.getElementById('btn-quick-save');
+          const text = document.getElementById('text-quick-save');
+          
+          // เปลี่ยนสไตล์ปุ่มเป็นสีเขียวแจ้งความสำเร็จ
+          btn.className = "px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-[11px] font-bold transition duration-150 flex items-center gap-1 shadow-sm";
+          text.innerText = "บันทึกสำเร็จ! ✓";
+          
+          // คืนค่าปุ่มเดิมภายใน 1.5 วินาที
+          setTimeout(() => {
+            btn.className = "px-3 py-1.5 border border-emerald-200 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 rounded-xl text-[11px] font-bold transition duration-150 flex items-center gap-1 shadow-sm";
+            text.innerText = "บันทึกปัจจุบัน";
+          }, 1500);
+        }
+
+        // ==========================================
+        // ระบบป๊อปอัปควบคุม Modals
+        // ==========================================
+        function openModal(type) {
+          document.getElementById(`modal-${type}`).classList.remove('hidden');
+        }
+
+        function closeModal(type) {
+          document.getElementById(`modal-${type}`).classList.add('hidden');
+        }
+
+        // โหมดบันทึกแผนใหม่
+        function openSavePlanModal() {
+          document.getElementById('input-new-plan-name').value = '';
+          openModal('save');
+        }
+
+        function saveAsNewPlan() {
+          const nameInput = document.getElementById('input-new-plan-name').value;
+          if (!nameInput.trim()) return;
+
+          const newId = 'plan-' + Date.now();
+          const newPlan = {
+            id: newId,
+            name: nameInput.trim(),
+            month: state.selectedMonth,
+            presets: { ...state.presets },
+            days: JSON.parse(JSON.stringify(state.days))
+          };
+
+          state.plans.push(newPlan);
+          state.selectedPlanId = newId;
+          saveStateToStorage();
+          renderPlanChips();
+          closeModal('save');
+        }
+
+        // โหมดแก้ชื่อของแผนปัจจุบัน
+        function openRenameModalOfActive() {
+          openRenameModal(state.selectedPlanId);
+        }
+
+        // โหมดแก้ชื่อแผนงาน
+        function openRenameModal(planId) {
+          planIdToRename = planId;
+          const targetPlan = state.plans.find(p => p.id === planId);
+          if (targetPlan) {
+            document.getElementById('input-rename-name').value = targetPlan.name;
+            openModal('rename');
+          }
+        }
+
+        function confirmRenamePlan() {
+          const newName = document.getElementById('input-rename-name').value;
+          if (!newName.trim() || !planIdToRename) return;
+
+          state.plans = state.plans.map(p => {
+            if (p.id === planIdToRename) {
+              return { ...p, name: newName.trim() };
+            }
+            return p;
+          });
+
+          saveStateToStorage();
+          renderPlanChips();
+          closeModal('rename');
+          planIdToRename = null;
+        }
+
+        // โหมดลบแผนปัจจุบัน
+        function openDeleteModalOfActive() {
+          openDeleteModal(state.selectedPlanId);
+        }
+
+        // โหมดลบแผนงาน
+        function openDeleteModal(planId) {
+          planIdToDelete = planId;
+          openModal('delete');
+        }
+
+        function confirmDeletePlan() {
+          if (!planIdToDelete) return;
+          state.plans = state.plans.filter(p => p.id !== planIdToDelete);
+
+          if (state.selectedPlanId === planIdToDelete && state.plans.length > 0) {
+            loadPlan(state.plans[0].id);
+          } else if (state.plans.length === 0) {
+            // สร้างแผนจำลองขึ้นใหม่หากลบหมด เพื่อป้องกันระบบค้าง
+            const freshId = 'plan-' + Date.now();
+            const freshPlan = {
+              id: freshId,
+              name: 'แผนหลัก มีนาคม (3.3 Campaign)',
+              month: '03',
+              presets: { ...DEFAULT_PRESETS },
+              days: JSON.parse(JSON.stringify(INITIAL_DAYS_DATA))
+            };
+            state.plans = [freshPlan];
+            loadPlan(freshId);
+          } else {
+            // ซิงค์สเตทปัจจุบันเมื่อทำการลบแบรนช์ข้างเคียง
+            loadPlan(state.selectedPlanId);
+          }
+
+          saveStateToStorage();
+          renderPlanChips();
+          closeModal('delete');
+          planIdToDelete = null;
+        }
+
+        // โหมดรีเซ็ตยอดใช้จริง
+        function openResetConfirmModal() {
+          openModal('reset');
+        }
+
+        function confirmResetActuals() {
+          state.days.forEach(day => {
+            day.shopActual = 0;
+            day.bannerActual = 0;
+            day.shopTarget = day.originalShopTarget;
+            day.bannerTarget = day.originalBannerTarget;
+            day.isCompleted = false;
+          });
+
+          saveStateToStorage();
+          initTableHTML();
+          recalculate();
+          closeModal('reset');
+        }
+
+        // เริ่มตั้งค่าแอปพลิเคชันเมื่อโหลด DOM สำเร็จ
+        window.addEventListener('DOMContentLoaded', () => {
+          document.getElementById('month-selector').value = state.selectedMonth;
+          syncPresetFormInputs();
+          initTableHTML();
+          renderPlanChips();
+          recalculate();
+        });
+    </script>
 </body>
 </html>
